@@ -1,52 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html style="width:100%; height:100%;">
     <head>
         <link rel="stylesheet" type="text/css" href="css/reset.css">
+        <script src="scripts/isocanvas.js"></script>
         <script type="text/javascript">
             function f() {
 
-                var c = document.getElementById("isoCanvas");
-                
-                var ctx = c.getContext("2d");
-                c.width = window.innerWidth - 2;
-                c.height = window.innerHeight - 2;
-                
-                ctx.fillStyle = "blue";
-                ctx.fillRect(0, 0, c.width, c.heigth);
-
-                var p1 = {'x': 0, 'y': 0};
-                var p2 = {'x': 0, 'y': 0};
-                var isoP1;
-                var isoP2;
-                // draw green isometric y-coord lines
-                ctx.strokeStyle = "#00ff00";
-                for (var y = 0; y < 21; y++) {
-                    p1.x = 0;
-                    p1.y = y;
-                    p2.x = 20;
-                    p2.y = y;
-                    isoP1 = cartesianToCanvasCoords(isoToCartesianCoords(p1));
-                    isoP2 = cartesianToCanvasCoords(isoToCartesianCoords(p2));
-                    ctx.beginPath();
-                    ctx.moveTo(isoP1.x, isoP1.y);
-                    ctx.lineTo(isoP2.x, isoP2.y);
-                    ctx.stroke();
-                }
-
-                // draw red isometric x-coord lines
-                ctx.strokeStyle = "#ff0000";
-                for (var x = 0; x < 21; x++) {
-                    p1.x = x;
-                    p1.y = 0;
-                    p2.x = x;
-                    p2.y = 20;
-                    isoP1 = cartesianToCanvasCoords(isoToCartesianCoords(p1));
-                    isoP2 = cartesianToCanvasCoords(isoToCartesianCoords(p2));
-                    ctx.beginPath();
-                    ctx.moveTo(isoP1.x, isoP1.y);
-                    ctx.lineTo(isoP2.x, isoP2.y);
-                    ctx.stroke();
-                }
+                var isoCanvas = new IsoCanvas(document.getElementById('isoCanvasDiv'));
 
                 // load up tiles
                 var imgs = [];
@@ -57,12 +17,10 @@
                     imgs[i].onload = function() {
                         loadedCounter++;
                         if (loadedCounter == numImages) {
-                            // draw random tiles
-                            for (var y = 0; y < 10; y++) {
-                                for (var x = 0; x < 10; x++) {
-                                    drawIsoTile(x, y, imgs[Math.floor(Math.random() * 10)], ctx);
-                                }
-                            }
+                            drawTiles(imgs, isoCanvas);
+                            window.addEventListener('resize', function(ev) {
+                                drawTiles(imgs, isoCanvas);
+                            });
                         }
                     };
                 }
@@ -79,32 +37,22 @@
 
             }
 
-            function isoToCartesianCoords(p) {
-                var isoP = {'x': 0, 'y': 0};
-                isoP.x = 64*(p.x - p.y);
-                isoP.y = 32*(p.x + p.y);
-                return isoP;
-            }
-            function cartesianToCanvasCoords(p) {                
-                var p2 = {'x': 0, 'y': 0};
-                var c = document.getElementById("isoCanvas");
-                p2.x = p.x + c.width / 2;
-                p2.y = p.y + c.height  / 6;
-                return p2;
-            }
-
-            function drawIsoTile(x, y, img, ctx) {
-                var pX = cartesianToCanvasCoords(isoToCartesianCoords({'x': x, 'y': y+1}));
-                var pY = cartesianToCanvasCoords(isoToCartesianCoords({'x': x, 'y': y}));
-                var sizeX = isoToCartesianCoords({'x': 2, 'y': 0});
-                var sizeY = isoToCartesianCoords({'x': 1, 'y': 1});
-
-                ctx.drawImage(img, pX.x, pY.y, sizeX.x, sizeY.y);
+            function drawTiles(imgs, isocan, ctx) {
+                // draw random tiles
+                for (var y = 0; y < 10; y++) {
+                    for (var x = 0; x < 10; x++) {
+                        //drawIsoTile(x, y,imgs[Math.floor(Math.random() * 10)], ctx);
+                        isocan.drawIsoTile(
+                            {'x':x, 'y': y},
+                            imgs[Math.floor(Math.random() * 10)]
+                        );
+                    }
+                }
             }
 
         </script>
     </head>
-    <body onload="f()">
-        <canvas id="isoCanvas"></canvas>
+    <body style="width:100%; height:100%;" onload="f()">
+        <div id="isoCanvasDiv" style="width:100%; height:100%;"></div>
     </body>
 </html>
