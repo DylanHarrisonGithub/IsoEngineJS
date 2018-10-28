@@ -98,5 +98,24 @@ var IsoCanvas = /** @class */ (function () {
         this._mouseCartesian = this.canvasToCartesianCoordinates(this._mouseCanvas);
         this._mouseIso = this.cartesianToIso(this._mouseCartesian);
     };
+    IsoCanvas.prototype.defaultMouseWheelListener = function (event) {
+        if (event.deltaY < 0) {
+            this._zoom = this._zoom * (1.05);
+            this._zoomInverse = 1.0 / this._zoom;
+        }
+        else {
+            this._zoom = this._zoom * (0.95);
+            this._zoomInverse = 1.0 / this._zoom;
+        }
+    };
+    IsoCanvas.prototype.defaultMouseClickListener = function (event) {
+        var centerDivRect = this._div.getBoundingClientRect();
+        this._mouseCanvas = { "x": event.clientX - centerDivRect.left, "y": event.clientY - centerDivRect.top };
+        this._mouseCartesian = this.canvasToCartesianCoordinates(this._mouseCanvas);
+        this._location.x = this._mouseCartesian.x;
+        this._location.y = this._mouseCartesian.y;
+        //this._mouseCanvas = {"x": this._halfResolution.x, "y": this._halfResolution.y};
+        //this._mouseCartesian = {"x": 0, "y": 0};
+    };
     return IsoCanvas;
 }());

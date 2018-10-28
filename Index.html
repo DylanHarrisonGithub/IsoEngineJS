@@ -23,6 +23,16 @@
                                 drawTiles(imgs, isoCanvas);
                                 isoCanvas.drawAxes();
                             });
+                            window.addEventListener('click', function(ev) {
+                                isoCanvas.defaultMouseClickListener(ev);
+                                drawTiles(imgs, isoCanvas);
+                                console.log('clicked');
+                            });
+                            window.addEventListener('wheel', function(ev) {
+                                isoCanvas.defaultMouseWheelListener(ev);
+                                drawTiles(imgs, isoCanvas);
+                                console.log('zoomed');
+                            });
                         }
                     };
                 }
