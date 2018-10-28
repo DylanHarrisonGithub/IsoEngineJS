@@ -18,8 +18,10 @@
                         loadedCounter++;
                         if (loadedCounter == numImages) {
                             drawTiles(imgs, isoCanvas);
+                            isoCanvas.drawAxes();
                             window.addEventListener('resize', function(ev) {
                                 drawTiles(imgs, isoCanvas);
+                                isoCanvas.drawAxes();
                             });
                         }
                     };
@@ -43,7 +45,7 @@
                     for (var x = 0; x < 10; x++) {
                         //drawIsoTile(x, y,imgs[Math.floor(Math.random() * 10)], ctx);
                         isocan.drawIsoTile(
-                            {'x':x, 'y': y},
+                            {'x': x, 'y': y},
                             imgs[Math.floor(Math.random() * 10)]
                         );
                     }
