@@ -4,6 +4,7 @@ class IsoCanvas {
     private _canvas: HTMLCanvasElement;
     private _location = {'x': 0, 'y': 0};
     private _tileSize = {'x': 64, 'y': 32};
+    private _canvasTileSize = {'x': 64, 'y': 32};
     private _doubleTileSizeInverse = {'x': 1.0 /(2*64), 'y': 1.0 /(2*32)};
     private _zoom =  1.0;
     private _zoomInverse = 1.0;
@@ -28,6 +29,13 @@ class IsoCanvas {
         this._canvas.height = this._div.clientHeight;
         this._halfResolution.x = this._canvas.width / 2;
         this._halfResolution.y = this._canvas.height / 2;
+
+        var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
+        var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
+        var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
+        var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
+        this._canvasTileSize.x = size2.x - size1.x;
+        this._canvasTileSize.y = size4.y - size3.y;
 
         this._div.addEventListener('mousemove', (ev: UIEvent) => {this.defaultMouseMoveListener(ev)});
 
@@ -63,11 +71,11 @@ class IsoCanvas {
     }
 
     canvasToCartesianCoordinates(screenCoordinate: {'x': number, 'y': number}) {
-		return {
+        return {
             'x': (screenCoordinate.x - this._halfResolution.x)*this._zoomInverse + this._location.x,
             'y': -(screenCoordinate.y - this._halfResolution.y)*this._zoomInverse + this._location.y
         }
-	};
+    };
 
     isoToCanvasCoords(isoCoord: {'x': number, 'y': number}) {
         return this.cartesianToCanvasCoords(
@@ -82,64 +90,57 @@ class IsoCanvas {
     }
 
     // Drawing
-    clearCanvas() {
-        var ctx = this._canvas.getContext('2d');
+    clearCanvas(ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = this.backgroundColor;
         ctx.fillRect(0,0,this._canvas.width,this._canvas.height);
     }
-    drawIsoTile(isoCoord:  {'x': number, 'y': number}, img: HTMLImageElement) {
+    drawIsoTile(isoCoord:  {'x': number, 'y': number}, img: HTMLImageElement, ctx: CanvasRenderingContext2D) {
 
-        var ctx = this._canvas.getContext('2d');
-        var pX = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': isoCoord.x -.5, 'y': isoCoord.y +.5}));
-        var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
-        var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
-        var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
-        var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
+        var pX = this.isoToCanvasCoords({'x': isoCoord.x -.5, 'y': isoCoord.y +.5});
 
-        ctx.drawImage(img, pX.x, pX.y, size2.x - size1.x, size4.y - size3.y);
+        ctx.drawImage(img, pX.x, pX.y, this._canvasTileSize.x, this._canvasTileSize.y);
     }
 
-    drawAxes() {
+    drawAxes(ctx: CanvasRenderingContext2D) {
 
-		var northWest = {"x":0, "y":0};
-		var southEast = {"x": this._canvas.width, "y": this._canvas.height};
-		var canvas2dContext = this._canvas.getContext('2d');
-		northWest = this.canvasToCartesianCoordinates(northWest);
-		southEast = this.canvasToCartesianCoordinates(southEast);
+        var northWest = {"x":0, "y":0};
+        var southEast = {"x": this._canvas.width, "y": this._canvas.height};
+        northWest = this.canvasToCartesianCoordinates(northWest);
+        southEast = this.canvasToCartesianCoordinates(southEast);
 
-		if ((northWest.x <= 0) && (southEast.x >= 0)) {
-			
-			var topCoord = {"x":0, "y":northWest.y};
-			var bottomCoord = {"x":0,"y":southEast.y};
-			
-			topCoord = this.cartesianToCanvasCoords(topCoord);
-			bottomCoord = this.cartesianToCanvasCoords(bottomCoord);
+        if ((northWest.x <= 0) && (southEast.x >= 0)) {
+            
+            var topCoord = {"x":0, "y":northWest.y};
+            var bottomCoord = {"x":0,"y":southEast.y};
+            
+            topCoord = this.cartesianToCanvasCoords(topCoord);
+            bottomCoord = this.cartesianToCanvasCoords(bottomCoord);
 
-			canvas2dContext.strokeStyle = this.axesColor;
-			canvas2dContext.beginPath();
-			canvas2dContext.moveTo(topCoord.x, topCoord.y);
-			canvas2dContext.lineTo(bottomCoord.x, bottomCoord.y);
-			canvas2dContext.stroke();
-			
-		}
-		if ((northWest.y >= 0) && (southEast.y <= 0)) {
-			
-			var leftCoord = {"x":northWest.x, "y":0};
-			var rightCoord = {"x":southEast.x, "y":0};
+            ctx.strokeStyle = this.axesColor;
+            ctx.beginPath();
+            ctx.moveTo(topCoord.x, topCoord.y);
+            ctx.lineTo(bottomCoord.x, bottomCoord.y);
+            ctx.stroke();
+            
+        }
+        if ((northWest.y >= 0) && (southEast.y <= 0)) {
+            
+            var leftCoord = {"x":northWest.x, "y":0};
+            var rightCoord = {"x":southEast.x, "y":0};
 
-			leftCoord = this.cartesianToCanvasCoords(leftCoord);
-			rightCoord = this.cartesianToCanvasCoords(rightCoord);
+            leftCoord = this.cartesianToCanvasCoords(leftCoord);
+            rightCoord = this.cartesianToCanvasCoords(rightCoord);
 
-			canvas2dContext.strokeStyle = this.axesColor;
-			canvas2dContext.beginPath();
-			canvas2dContext.moveTo(leftCoord.x, leftCoord.y);
-			canvas2dContext.lineTo(rightCoord.x, rightCoord.y);
-			canvas2dContext.stroke();
-			
-		}		
+            ctx.strokeStyle = this.axesColor;
+            ctx.beginPath();
+            ctx.moveTo(leftCoord.x, leftCoord.y);
+            ctx.lineTo(rightCoord.x, rightCoord.y);
+            ctx.stroke();
+            
+        }		
     }
 
-    drawIsoAxes() {
+    drawIsoAxes(ctx: CanvasRenderingContext2D) {
 
         // screen boundaries
         var a = this.canvasToCartesianCoordinates({"x": 0, "y": 0});
@@ -219,9 +220,6 @@ class IsoCanvas {
             }
         }
 
-        console.log(xIntersections, yIntersections);
-
-		var ctx = this._canvas.getContext('2d');
         if (xIntersections.length >= 2) {
 
             var x1 = IsoCanvas._getParametricPoint(
@@ -238,9 +236,9 @@ class IsoCanvas {
             x2 = this.cartesianToCanvasCoords(x2);
 
             ctx.strokeStyle = this.axesColor;
-			ctx.beginPath();
-			ctx.moveTo(x1.x, x1.y);
-			ctx.lineTo(x2.x, x2.y);
+            ctx.beginPath();
+            ctx.moveTo(x1.x, x1.y);
+            ctx.lineTo(x2.x, x2.y);
             ctx.stroke();
             
         }
@@ -260,9 +258,9 @@ class IsoCanvas {
             y2 = this.cartesianToCanvasCoords(y2);
 
             ctx.strokeStyle = this.axesColor;
-			ctx.beginPath();
-			ctx.moveTo(y1.x, y1.y);
-			ctx.lineTo(y2.x, y2.y);
+            ctx.beginPath();
+            ctx.moveTo(y1.x, y1.y);
+            ctx.lineTo(y2.x, y2.y);
             ctx.stroke();
         }
         
@@ -270,19 +268,20 @@ class IsoCanvas {
     
     paint() {
 
-        this.clearCanvas();
+        var ctx = this._canvas.getContext('2d');
+        this.clearCanvas(ctx);
 
         // draw tilemap
         for (var l = 0; l < this.layers.length; l++) {
             for (var y = 0; y < this.layers[l].length; y++) {
                 for (var x = 0; x < this.layers[l][y].length; x++) {
-                    this.drawIsoTile({'x': x, 'y': y}, this.tiles[this.layers[l][y][x]]);
+                    this.drawIsoTile({'x': x, 'y': y}, this.tiles[this.layers[l][y][x]], ctx);
                 }
             }                      
         }
 
         if (this.showAxes) {
-            this.drawIsoAxes();
+            this.drawIsoAxes(ctx);
             //this.drawAxes();
         }
 
@@ -293,37 +292,49 @@ class IsoCanvas {
 
     // Event Listeners
     defaultMouseMoveListener(event) {
-		
-		var centerDivRect = this._div.getBoundingClientRect();
-		this._mouseCanvas = {"x": event.clientX-centerDivRect.left, "y": event.clientY-centerDivRect.top};
+        
+        var centerDivRect = this._div.getBoundingClientRect();
+        this._mouseCanvas = {"x": event.clientX-centerDivRect.left, "y": event.clientY-centerDivRect.top};
         this._mouseCartesian = this.canvasToCartesianCoordinates(this._mouseCanvas);
         this._mouseIso = this.cartesianToIsoCoords(this._mouseCartesian);
-		
+        
     }
     
-	defaultMouseWheelListener(event) {
-		
-		if (event.deltaY < 0) {
-			this._zoom = this._zoom*(1.05);
-			this._zoomInverse = 1.0/this._zoom;
-		} else {
-			this._zoom = this._zoom*(0.95);
-			this._zoomInverse = 1.0/this._zoom;			
-		}
-		
-	}
-	
-	defaultMouseClickListener(event) {
-		
-		var centerDivRect = this._div.getBoundingClientRect();
-		this._mouseCanvas = {"x": event.clientX-centerDivRect.left, "y": event.clientY-centerDivRect.top};
+    defaultMouseWheelListener(event) {
+        
+        if (event.deltaY < 0) {
+            this._zoom = this._zoom*(1.05);
+            this._zoomInverse = 1.0/this._zoom;
+            var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
+            var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
+            var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
+            var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
+            this._canvasTileSize.x = size2.x - size1.x;
+            this._canvasTileSize.y = size4.y - size3.y;
+        } else {
+            this._zoom = this._zoom*(0.95);
+            this._zoomInverse = 1.0/this._zoom;
+            var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
+            var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
+            var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
+            var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
+            this._canvasTileSize.x = size2.x - size1.x;
+            this._canvasTileSize.y = size4.y - size3.y;			
+        }
+        
+    }
+    
+    defaultMouseClickListener(event) {
+        
+        var centerDivRect = this._div.getBoundingClientRect();
+        this._mouseCanvas = {"x": event.clientX-centerDivRect.left, "y": event.clientY-centerDivRect.top};
         this._mouseCartesian = this.canvasToCartesianCoordinates(this._mouseCanvas);
 
-		this._location.x = this._mouseCartesian.x;
-		this._location.y = this._mouseCartesian.y;
-		
-		//this._mouseCanvas = {"x": this._halfResolution.x, "y": this._halfResolution.y};
-		//this._mouseCartesian = {"x": 0, "y": 0};
+        this._location.x = this._mouseCartesian.x;
+        this._location.y = this._mouseCartesian.y;
+        
+        //this._mouseCanvas = {"x": this._halfResolution.x, "y": this._halfResolution.y};
+        //this._mouseCartesian = {"x": 0, "y": 0};
 
     }
     
