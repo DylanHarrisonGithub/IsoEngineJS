@@ -13,25 +13,27 @@
                 var loadedCounter = 0;
                 var numImages = 10;
                 for (var i = 0; i < 10; i++) {
+
                     imgs.push(new Image());
+
                     imgs[i].onload = function() {
+
                         loadedCounter++;
                         if (loadedCounter == numImages) {
-                            drawTiles(imgs, isoCanvas);
-                            isoCanvas.drawAxes();
+                            isoCanvas.tiles = imgs;
+                            isoCanvas.layers.push(generateMap());
+                            isoCanvas.paint();
                             window.addEventListener('resize', function(ev) {
-                                drawTiles(imgs, isoCanvas);
-                                isoCanvas.drawAxes();
+                                //isoCanvas.defaultResizeListener(ev);
+                                isoCanvas.paint();
                             });
-                            window.addEventListener('click', function(ev) {
+                            window.addEventListener('click', function(ev) {                                
                                 isoCanvas.defaultMouseClickListener(ev);
-                                drawTiles(imgs, isoCanvas);
-                                console.log('clicked');
+                                isoCanvas.paint();
                             });
                             window.addEventListener('wheel', function(ev) {
                                 isoCanvas.defaultMouseWheelListener(ev);
-                                drawTiles(imgs, isoCanvas);
-                                console.log('zoomed');
+                                isoCanvas.paint();
                             });
                         }
                     };
@@ -49,17 +51,16 @@
 
             }
 
-            function drawTiles(imgs, isocan, ctx) {
-                // draw random tiles
+            function generateMap() {
+                // generate random map
+                var layer = []
                 for (var y = 0; y < 10; y++) {
+                    layer.push([]);
                     for (var x = 0; x < 10; x++) {
-                        //drawIsoTile(x, y,imgs[Math.floor(Math.random() * 10)], ctx);
-                        isocan.drawIsoTile(
-                            {'x': x, 'y': y},
-                            imgs[Math.floor(Math.random() * 10)]
-                        );
+                        layer[y].push(Math.floor(Math.random()*10));
                     }
                 }
+                return layer;
             }
 
         </script>

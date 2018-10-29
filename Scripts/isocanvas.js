@@ -11,6 +11,11 @@ var IsoCanvas = /** @class */ (function () {
         this._mouseCartesian = { 'x': 0, 'y': 0 };
         this._mouseIso = { 'x': 0, 'y': 0 };
         this.axesColor = '#000000';
+        this.backgroundColor = '#ffffff';
+        this.layers = [];
+        this.tiles = [];
+        this.showAxes = true;
+        this.showGrid = true;
         this._div = delagateDiv;
         this._canvas = document.createElement('canvas');
         this._div.append(this._canvas);
@@ -26,6 +31,7 @@ var IsoCanvas = /** @class */ (function () {
             _this._halfResolution.y = _this._canvas.height / 2;
         });
     }
+    // Transformations
     IsoCanvas.prototype.isoToCartesianCoords = function (isoCoord) {
         return {
             'x': this._tileSize.x * (isoCoord.x - isoCoord.y),
@@ -53,6 +59,12 @@ var IsoCanvas = /** @class */ (function () {
     ;
     IsoCanvas.prototype.isoToCanvasCoords = function (isoCoord) {
         return this.cartesianToCanvasCoords(this.isoToCartesianCoords(isoCoord));
+    };
+    // Drawing
+    IsoCanvas.prototype.clearCanvas = function () {
+        var ctx = this._canvas.getContext('2d');
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
     };
     IsoCanvas.prototype.drawIsoTile = function (isoCoord, img) {
         var ctx = this._canvas.getContext('2d');
@@ -92,6 +104,24 @@ var IsoCanvas = /** @class */ (function () {
             canvas2dContext.stroke();
         }
     };
+    IsoCanvas.prototype.paint = function () {
+        this.clearCanvas();
+        // draw tilemap
+        for (var l = 0; l < this.layers.length; l++) {
+            for (var y = 0; y < this.layers[l].length; y++) {
+                for (var x = 0; x < this.layers[l][y].length; x++) {
+                    this.drawIsoTile({ 'x': x, 'y': y }, this.tiles[this.layers[l][y][x]]);
+                }
+            }
+        }
+        if (this.showAxes) {
+            this.drawAxes();
+        }
+        if (this.showGrid) {
+            //this.drawGrid();
+        }
+    };
+    // Event Listeners
     IsoCanvas.prototype.defaultMouseMoveListener = function (event) {
         var centerDivRect = this._div.getBoundingClientRect();
         this._mouseCanvas = { "x": event.clientX - centerDivRect.left, "y": event.clientY - centerDivRect.top };

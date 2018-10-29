@@ -12,7 +12,12 @@ class IsoCanvas {
     private _mouseCartesian = {'x': 0, 'y': 0};
     private _mouseIso = {'x': 0, 'y': 0};
     
-	public axesColor = '#000000';
+    public axesColor = '#000000';
+    public backgroundColor = '#ffffff';
+    public layers = [];
+    public tiles = [];
+    public showAxes = true;
+    public showGrid = true;
 
     constructor(delagateDiv: HTMLDivElement) {
 
@@ -35,6 +40,7 @@ class IsoCanvas {
 
     }
 
+    // Transformations
     isoToCartesianCoords(isoCoord: {'x': number, 'y': number}) {
         return {
             'x': this._tileSize.x*(isoCoord.x - isoCoord.y),
@@ -69,6 +75,12 @@ class IsoCanvas {
         );
     }
 
+    // Drawing
+    clearCanvas() {
+        var ctx = this._canvas.getContext('2d');
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(0,0,this._canvas.width,this._canvas.height);
+    }
     drawIsoTile(isoCoord:  {'x': number, 'y': number}, img: HTMLImageElement) {
 
         var ctx = this._canvas.getContext('2d');
@@ -119,8 +131,31 @@ class IsoCanvas {
 			canvas2dContext.stroke();
 			
 		}		
-	}
+    }
+    
+    paint() {
 
+        this.clearCanvas();
+
+        // draw tilemap
+        for (var l = 0; l < this.layers.length; l++) {
+            for (var y = 0; y < this.layers[l].length; y++) {
+                for (var x = 0; x < this.layers[l][y].length; x++) {
+                    this.drawIsoTile({'x': x, 'y': y}, this.tiles[this.layers[l][y][x]]);
+                }
+            }                      
+        }
+
+        if (this.showAxes) {
+            this.drawAxes();
+        }
+
+        if (this.showGrid) {
+            //this.drawGrid();
+        }
+    }
+
+    // Event Listeners
     defaultMouseMoveListener(event) {
 		
 		var centerDivRect = this._div.getBoundingClientRect();
