@@ -38,7 +38,7 @@ var IsoCanvas = /** @class */ (function () {
             'y': -this._tileSize.y * (isoCoord.x + isoCoord.y)
         };
     };
-    IsoCanvas.prototype.cartesianToIso = function (cartesianCoord) {
+    IsoCanvas.prototype.cartesianToIsoCoords = function (cartesianCoord) {
         return {
             'x': cartesianCoord.x * this._doubleTileSizeInverse.x - cartesianCoord.y * this._doubleTileSizeInverse.y,
             'y': -(cartesianCoord.x * this._doubleTileSizeInverse.x + cartesianCoord.y * this._doubleTileSizeInverse.y)
@@ -59,6 +59,9 @@ var IsoCanvas = /** @class */ (function () {
     ;
     IsoCanvas.prototype.isoToCanvasCoords = function (isoCoord) {
         return this.cartesianToCanvasCoords(this.isoToCartesianCoords(isoCoord));
+    };
+    IsoCanvas.prototype.canvasToIsoCoords = function (canvasCoord) {
+        return this.canvasToCartesianCoordinates(this.cartesianToIsoCoords(canvasCoord));
     };
     // Drawing
     IsoCanvas.prototype.clearCanvas = function () {
@@ -104,6 +107,105 @@ var IsoCanvas = /** @class */ (function () {
             canvas2dContext.stroke();
         }
     };
+    IsoCanvas.prototype.drawIsoAxes = function () {
+        // screen boundaries
+        var a = this.canvasToCartesianCoordinates({ "x": 0, "y": 0 });
+        var b = this.canvasToCartesianCoordinates({ 'x': this._canvas.width, 'y': 0 });
+        var c = this.canvasToCartesianCoordinates({ "x": this._canvas.width, "y": this._canvas.height });
+        var d = this.canvasToCartesianCoordinates({ 'x': 0, 'y': this._canvas.height });
+        // isometric axes
+        var o = this.isoToCartesianCoords({ 'x': 0, 'y': 0 });
+        var x = this.isoToCartesianCoords({ 'x': 1, 'y': 0 });
+        var y = this.isoToCartesianCoords({ 'x': 0, 'y': 1 });
+        // find where screen boundaries and isometric axes intersect
+        var xIntersections = [];
+        var yIntersections = [];
+        xIntersections.push({
+            'u': a,
+            'v': b,
+            't': IsoCanvas._findParametricIntersection(a, b, o, x)
+        });
+        xIntersections.push({
+            'u': b,
+            'v': c,
+            't': IsoCanvas._findParametricIntersection(b, c, o, x)
+        });
+        xIntersections.push({
+            'u': c,
+            'v': d,
+            't': IsoCanvas._findParametricIntersection(c, d, o, x)
+        });
+        xIntersections.push({
+            'u': d,
+            'v': a,
+            't': IsoCanvas._findParametricIntersection(d, a, o, x)
+        });
+        yIntersections.push({
+            'u': a,
+            'v': b,
+            't': IsoCanvas._findParametricIntersection(a, b, o, y)
+        });
+        yIntersections.push({
+            'u': b,
+            'v': c,
+            't': IsoCanvas._findParametricIntersection(b, c, o, y)
+        });
+        yIntersections.push({
+            'u': c,
+            'v': d,
+            't': IsoCanvas._findParametricIntersection(c, d, o, y)
+        });
+        yIntersections.push({
+            'u': d,
+            'v': a,
+            't': IsoCanvas._findParametricIntersection(d, a, o, y)
+        });
+        // ignore intersections that occur off screen and non-intersections
+        for (var i = 3; i > -1; i--) {
+            if (xIntersections[i].t) {
+                if (xIntersections[i].t < 0 || xIntersections[i].t > 1.0) {
+                    xIntersections.splice(i, 1);
+                }
+            }
+            else {
+                xIntersections.splice(i, 1);
+            }
+        }
+        for (var i = 3; i > -1; i--) {
+            if (yIntersections[i].t) {
+                if (yIntersections[i].t < 0 || yIntersections[i].t > 1.0) {
+                    yIntersections.splice(i, 1);
+                }
+            }
+            else {
+                yIntersections.splice(i, 1);
+            }
+        }
+        console.log(xIntersections, yIntersections);
+        var ctx = this._canvas.getContext('2d');
+        if (xIntersections.length >= 2) {
+            var x1 = IsoCanvas._getParametricPoint(xIntersections[0].u, xIntersections[0].v, xIntersections[0].t);
+            var x2 = IsoCanvas._getParametricPoint(xIntersections[1].u, xIntersections[1].v, xIntersections[1].t);
+            x1 = this.cartesianToCanvasCoords(x1);
+            x2 = this.cartesianToCanvasCoords(x2);
+            ctx.strokeStyle = this.axesColor;
+            ctx.beginPath();
+            ctx.moveTo(x1.x, x1.y);
+            ctx.lineTo(x2.x, x2.y);
+            ctx.stroke();
+        }
+        if (yIntersections.length >= 2) {
+            var y1 = IsoCanvas._getParametricPoint(yIntersections[0].u, yIntersections[0].v, yIntersections[0].t);
+            var y2 = IsoCanvas._getParametricPoint(yIntersections[1].u, yIntersections[1].v, yIntersections[1].t);
+            y1 = this.cartesianToCanvasCoords(y1);
+            y2 = this.cartesianToCanvasCoords(y2);
+            ctx.strokeStyle = this.axesColor;
+            ctx.beginPath();
+            ctx.moveTo(y1.x, y1.y);
+            ctx.lineTo(y2.x, y2.y);
+            ctx.stroke();
+        }
+    };
     IsoCanvas.prototype.paint = function () {
         this.clearCanvas();
         // draw tilemap
@@ -115,7 +217,8 @@ var IsoCanvas = /** @class */ (function () {
             }
         }
         if (this.showAxes) {
-            this.drawAxes();
+            this.drawIsoAxes();
+            //this.drawAxes();
         }
         if (this.showGrid) {
             //this.drawGrid();
@@ -126,7 +229,7 @@ var IsoCanvas = /** @class */ (function () {
         var centerDivRect = this._div.getBoundingClientRect();
         this._mouseCanvas = { "x": event.clientX - centerDivRect.left, "y": event.clientY - centerDivRect.top };
         this._mouseCartesian = this.canvasToCartesianCoordinates(this._mouseCanvas);
-        this._mouseIso = this.cartesianToIso(this._mouseCartesian);
+        this._mouseIso = this.cartesianToIsoCoords(this._mouseCartesian);
     };
     IsoCanvas.prototype.defaultMouseWheelListener = function (event) {
         if (event.deltaY < 0) {
@@ -146,6 +249,22 @@ var IsoCanvas = /** @class */ (function () {
         this._location.y = this._mouseCartesian.y;
         //this._mouseCanvas = {"x": this._halfResolution.x, "y": this._halfResolution.y};
         //this._mouseCartesian = {"x": 0, "y": 0};
+    };
+    // helper methods
+    IsoCanvas._findParametricIntersection = function (A1, A2, B1, B2) {
+        var a = { 'x': A2.x - A1.x, 'y': A2.y - A1.y };
+        var b = { 'x': B2.x - B1.x, 'y': B2.y - B1.y };
+        var c = { 'x': B1.x - A1.x, 'y': B1.y - A1.y };
+        var determinant = b.x * a.y - a.x * b.y;
+        if (determinant != 0) {
+            return (b.x * c.y - c.x * b.y) / determinant;
+        }
+        else {
+            return null;
+        }
+    };
+    IsoCanvas._getParametricPoint = function (u, v, t) {
+        return { 'x': u.x + t * (v.x - u.x), 'y': u.y + t * (v.y - u.y) };
     };
     return IsoCanvas;
 }());
