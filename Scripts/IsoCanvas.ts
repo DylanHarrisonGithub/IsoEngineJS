@@ -14,6 +14,7 @@ class IsoCanvas {
     private _mouseIso = {'x': 0, 'y': 0};
     
     public axesColor = '#000000';
+    public gridColor = '#A0A0C0';
     public backgroundColor = '#ffffff';
     public layers = [];
     public tiles = [];
@@ -84,8 +85,8 @@ class IsoCanvas {
     }
 
     canvasToIsoCoords(canvasCoord: {'x': number, 'y': number}) {
-        return this.canvasToCartesianCoordinates(
-            this.cartesianToIsoCoords(canvasCoord)
+        return this.cartesianToIsoCoords(
+            this.canvasToCartesianCoordinates(canvasCoord)
         );
     }
 
@@ -142,128 +143,102 @@ class IsoCanvas {
 
     drawIsoAxes(ctx: CanvasRenderingContext2D) {
 
-        // screen boundaries
-        var a = this.canvasToCartesianCoordinates({"x": 0, "y": 0});
-        var b = this.canvasToCartesianCoordinates({'x': this._canvas.width, 'y': 0});
-        var c = this.canvasToCartesianCoordinates({"x": this._canvas.width, "y": this._canvas.height});
-        var d = this.canvasToCartesianCoordinates({'x': 0, 'y': this._canvas.height});
+        var xAxis = this._cartesianGetLineSegmentInCanvasBounds(
+            this.isoToCartesianCoords({'x': 0, 'y': 0}),
+            this.isoToCartesianCoords({'x': 1, 'y': 0})
+        );
+
+        var yAxis = this._cartesianGetLineSegmentInCanvasBounds(
+            this.isoToCartesianCoords({'x': 0, 'y': 0}),
+            this.isoToCartesianCoords({'x': 0, 'y': 1})
+        );
         
-        // isometric axes
-        var o = this.isoToCartesianCoords({'x': 0, 'y': 0});
-        var x = this.isoToCartesianCoords({'x': 1, 'y': 0});
-        var y = this.isoToCartesianCoords({'x': 0, 'y': 1});
+        ctx.strokeStyle = this.axesColor;
+        var u, v;
+        if (xAxis) {
 
-        // find where screen boundaries and isometric axes intersect
-        var xIntersections = [];
-        var yIntersections = [];
-        
-        xIntersections.push({
-            'u': a,
-            'v': b,
-            't': IsoCanvas._findParametricIntersection(a, b, o, x)
-        });
-        xIntersections.push({
-            'u': b,
-            'v': c,
-            't': IsoCanvas._findParametricIntersection(b, c, o, x)
-        });
-        xIntersections.push({
-            'u': c,
-            'v': d,
-            't': IsoCanvas._findParametricIntersection(c, d, o, x)
-        });
-        xIntersections.push({
-            'u': d,
-            'v': a,
-            't': IsoCanvas._findParametricIntersection(d, a, o, x)
-        });
+            u = this.cartesianToCanvasCoords(xAxis.u);
+            v = this.cartesianToCanvasCoords(xAxis.v);
 
-        yIntersections.push({
-            'u': a,
-            'v': b,
-            't': IsoCanvas._findParametricIntersection(a, b, o, y)
-        });
-        yIntersections.push({
-            'u': b,
-            'v': c,
-            't': IsoCanvas._findParametricIntersection(b, c, o, y)
-        });
-        yIntersections.push({
-            'u': c,
-            'v': d,
-            't': IsoCanvas._findParametricIntersection(c, d, o, y)
-        });
-        yIntersections.push({
-            'u': d,
-            'v': a,
-            't': IsoCanvas._findParametricIntersection(d, a, o, y)
-        });
-
-        // ignore intersections that occur off screen and non-intersections
-        for (var i = 3; i > -1; i--) {
-            if (xIntersections[i].t) {
-                if (xIntersections[i].t < 0 || xIntersections[i].t > 1.0) {
-                    xIntersections.splice(i, 1);
-                }
-            } else {
-                xIntersections.splice(i, 1);
-            }
-        }
-
-        for (var i = 3; i > -1; i--) {
-            if (yIntersections[i].t) {
-                if (yIntersections[i].t < 0 || yIntersections[i].t > 1.0) {
-                    yIntersections.splice(i, 1);
-                }
-            } else {
-                yIntersections.splice(i, 1);
-            }
-        }
-
-        if (xIntersections.length >= 2) {
-
-            var x1 = IsoCanvas._getParametricPoint(
-                xIntersections[0].u,
-                xIntersections[0].v,
-                xIntersections[0].t);
-
-            var x2 = IsoCanvas._getParametricPoint(
-                xIntersections[1].u,
-                xIntersections[1].v,
-                xIntersections[1].t);
-
-            x1 = this.cartesianToCanvasCoords(x1);
-            x2 = this.cartesianToCanvasCoords(x2);
-
-            ctx.strokeStyle = this.axesColor;
             ctx.beginPath();
-            ctx.moveTo(x1.x, x1.y);
-            ctx.lineTo(x2.x, x2.y);
+            ctx.moveTo(u.x , u.y);
+            ctx.lineTo(v.x, v.y);
             ctx.stroke();
-            
         }
-        if (yIntersections.length >= 2) {
 
-            var y1 = IsoCanvas._getParametricPoint(
-                yIntersections[0].u,
-                yIntersections[0].v,
-                yIntersections[0].t);
+        if (yAxis) {
 
-            var y2 = IsoCanvas._getParametricPoint(
-                yIntersections[1].u,
-                yIntersections[1].v,
-                yIntersections[1].t);
+            u = this.cartesianToCanvasCoords(yAxis.u);
+            v = this.cartesianToCanvasCoords(yAxis.v);
 
-            y1 = this.cartesianToCanvasCoords(y1);
-            y2 = this.cartesianToCanvasCoords(y2);
-
-            ctx.strokeStyle = this.axesColor;
             ctx.beginPath();
-            ctx.moveTo(y1.x, y1.y);
-            ctx.lineTo(y2.x, y2.y);
+            ctx.moveTo(u.x , u.y);
+            ctx.lineTo(v.x, v.y);
             ctx.stroke();
         }
         
+    }
+
+    drawIsoGrid(ctx: CanvasRenderingContext2D) {
+
+        // get isometric coordinates of canvas boundary corners
+        // a----b
+        // |    |
+        // d----c
+        var a = this.canvasToIsoCoords({"x": 0, "y": 0});
+        var b = this.canvasToIsoCoords({'x': this._canvas.width, 'y': 0});
+        var c = this.canvasToIsoCoords({"x": this._canvas.width, "y": this._canvas.height});
+        var d = this.canvasToIsoCoords({'x': 0, 'y': this._canvas.height});
+
+        a.x = Math.floor(a.x);
+        a.y = Math.floor(a.y);
+        c.x = Math.floor(c.x) + 1;
+        c.y = Math.floor(c.y) + 1;
+
+        b.x = Math.floor(b.x) + 1;
+        b.y = Math.floor(b.y);
+        d.x = Math.floor(d.x);
+        d.y = Math.floor(d.y) + 1;
+
+        ctx.strokeStyle = this.gridColor;
+        var uv, u, v;
+
+        // plot x gridlines
+        for (var x = a.x; x < c.x; x++) {
+
+            uv = this._cartesianGetLineSegmentInCanvasBounds(
+                this.isoToCartesianCoords({'x': x, 'y': 0}),
+                this.isoToCartesianCoords({'x': x, 'y': 1})
+            );
+
+            if (uv) {
+                u = this.cartesianToCanvasCoords(uv.u);
+                v = this.cartesianToCanvasCoords(uv.v);
+                ctx.beginPath();
+                ctx.moveTo(u.x , u.y);
+                ctx.lineTo(v.x, v.y);
+                ctx.stroke();
+            }
+        }
+
+        // plot y gridlines
+        console.log(b.y, d.y);
+        for (var y = b.y; y < d.y; y++) {
+
+            uv = this._cartesianGetLineSegmentInCanvasBounds(
+                this.isoToCartesianCoords({'x': 0, 'y': y}),
+                this.isoToCartesianCoords({'x': 1, 'y': y})
+            );
+
+            if (uv) {
+                u = this.cartesianToCanvasCoords(uv.u);
+                v = this.cartesianToCanvasCoords(uv.v);
+                ctx.beginPath();
+                ctx.moveTo(u.x , u.y);
+                ctx.lineTo(v.x, v.y);
+                ctx.stroke();
+            }
+        }
     }
     
     paint() {
@@ -280,13 +255,13 @@ class IsoCanvas {
             }                      
         }
 
+        if (this.showGrid) {
+            this.drawIsoGrid(ctx);
+        }
+
         if (this.showAxes) {
             this.drawIsoAxes(ctx);
             //this.drawAxes();
-        }
-
-        if (this.showGrid) {
-            //this.drawGrid();
         }
     }
 
@@ -339,6 +314,75 @@ class IsoCanvas {
     }
     
     // helper methods
+    _cartesianGetLineSegmentInCanvasBounds(
+        u: {'x': number, 'y': number},
+        v: {'x': number, 'y': number}
+    ) {
+
+        // get screen boundary corners
+        // a----b
+        // |    |
+        // d----c
+        var a = this.canvasToCartesianCoordinates({"x": 0, "y": 0});
+        var b = this.canvasToCartesianCoordinates({'x': this._canvas.width, 'y': 0});
+        var c = this.canvasToCartesianCoordinates({"x": this._canvas.width, "y": this._canvas.height});
+        var d = this.canvasToCartesianCoordinates({'x': 0, 'y': this._canvas.height});
+
+        // find where screen boundaries and line uv intersect
+        var intersections = [];        
+        intersections.push({
+            'u': a,
+            'v': b,
+            't': IsoCanvas._findParametricIntersection(a, b, u, v)
+        });
+        intersections.push({
+            'u': b,
+            'v': c,
+            't': IsoCanvas._findParametricIntersection(b, c, u, v)
+        });
+        intersections.push({
+            'u': c,
+            'v': d,
+            't': IsoCanvas._findParametricIntersection(c, d, u, v)
+        });
+        intersections.push({
+            'u': d,
+            'v': a,
+            't': IsoCanvas._findParametricIntersection(d, a, u, v)
+        });
+
+        // ignore intersections that occur off screen and non-intersections
+        for (var i = 3; i > -1; i--) {
+            if (intersections[i].t) {
+                if (intersections[i].t < 0 || intersections[i].t > 1.0) {
+                    intersections.splice(i, 1);
+                }
+            } else {
+                intersections.splice(i, 1);
+            }
+        }
+
+        // return line segment intersecting screen bounds, if any.
+        // !!might break if a line intersects in a screen corner??
+        if (intersections.length >= 2) {
+
+            var x1 = IsoCanvas._getParametricPoint(
+                intersections[0].u,
+                intersections[0].v,
+                intersections[0].t);
+
+            var x2 = IsoCanvas._getParametricPoint(
+                intersections[1].u,
+                intersections[1].v,
+                intersections[1].t);
+
+            return {'u': x1, 'v': x2};
+
+        } else {
+            return null;
+        }
+
+    }
     static _findParametricIntersection(
         A1: {'x': number, 'y': number},
         A2: {'x': number, 'y': number},
@@ -365,4 +409,5 @@ class IsoCanvas {
     ) {
         return {'x': u.x + t*(v.x - u.x), 'y': u.y + t*(v.y - u.y)};
     }
+
 }
