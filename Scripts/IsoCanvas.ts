@@ -4,8 +4,8 @@ class IsoCanvas {
     private _canvas: HTMLCanvasElement;
     private _location = {'x': 0, 'y': 0};
     private _tileSize = {'x': 64, 'y': 32};
+    private _doubleTileSizeInverse = {'x': 1.0 /(2*64), 'y': 1.0 /(2*32)};   
     private _canvasTileSize = {'x': 64, 'y': 32};
-    private _doubleTileSizeInverse = {'x': 1.0 /(2*64), 'y': 1.0 /(2*32)};
     private _zoom =  1.0;
     private _zoomInverse = 1.0;
     private _halfResolution = {'x': 0, 'y': 0};
@@ -95,11 +95,56 @@ class IsoCanvas {
         ctx.fillStyle = this.backgroundColor;
         ctx.fillRect(0,0,this._canvas.width,this._canvas.height);
     }
+
     drawIsoTile(isoCoord:  {'x': number, 'y': number}, img: HTMLImageElement, ctx: CanvasRenderingContext2D) {
 
         var pX = this.isoToCanvasCoords({'x': isoCoord.x -.5, 'y': isoCoord.y +.5});
 
         ctx.drawImage(img, pX.x, pX.y, this._canvasTileSize.x, this._canvasTileSize.y);
+    }
+
+    drawIsoTilesWithinCanvasFrame(ctx: CanvasRenderingContext2D) {
+
+        // get isometric coordinates of canvas boundary corners
+        // a----b
+        // |    |
+        // d----c
+        var a = this.canvasToIsoCoords({"x": 0, "y": 0});
+        var b = this.canvasToIsoCoords({'x': this._canvas.width, 'y': 0});
+        var c = this.canvasToIsoCoords({"x": this._canvas.width, "y": this._canvas.height});
+        var d = this.canvasToIsoCoords({'x': 0, 'y': this._canvas.height});
+
+        // make sure corners form a perfect box
+        a.x = Math.floor(a.x) - 1;
+        a.y = Math.floor(a.y);
+        b.x = Math.floor(b.x);
+        b.y = a.y - b.x + a.x;     
+        c.y = Math.floor(c.y);
+        c.x = c.y - b.y + b.x;
+        d.x = ((c.x+c.y)+(a.x-a.y))/2;
+        d.y = ((c.x+c.y)-(a.x-a.y))/2;
+
+        var u = {'x': a.x, 'y': a.y};
+        var height = 2*(d.y - a.y) + 1;
+        for (var diagonal = 0; diagonal < height; diagonal++) {
+
+            while ((u.x <= b.x) && (u.y >= b.y)) {
+
+                if ((u.x > -1) && (u.x < this.layers[0][0].length) && (u.y > -1) && (u.y < this.layers[0].length)) {    
+                    this.drawIsoTile({'x': u.x, 'y': u.y}, this.tiles[this.layers[0][u.y][u.x]], ctx);
+                }
+                u.x++;
+                u.y--;
+            }
+            if (diagonal % 2 == 1) {
+                b.y++;
+                a.x++;
+            } else {
+                b.x++;
+                a.y++;
+            }
+            u = {'x': a.x, 'y': a.y};
+        }
     }
 
     drawAxes(ctx: CanvasRenderingContext2D) {
@@ -143,6 +188,7 @@ class IsoCanvas {
 
     drawIsoAxes(ctx: CanvasRenderingContext2D) {
 
+        // find where x and y axis intersect canvas boundaries
         var xAxis = this._cartesianGetLineSegmentInCanvasBounds(
             this.isoToCartesianCoords({'x': 0, 'y': 0}),
             this.isoToCartesianCoords({'x': 1, 'y': 0})
@@ -222,7 +268,6 @@ class IsoCanvas {
         }
 
         // plot y gridlines
-        console.log(b.y, d.y);
         for (var y = b.y; y < d.y; y++) {
 
             uv = this._cartesianGetLineSegmentInCanvasBounds(
@@ -247,13 +292,14 @@ class IsoCanvas {
         this.clearCanvas(ctx);
 
         // draw tilemap
-        for (var l = 0; l < this.layers.length; l++) {
+/*         for (var l = 0; l < this.layers.length; l++) {
             for (var y = 0; y < this.layers[l].length; y++) {
                 for (var x = 0; x < this.layers[l][y].length; x++) {
                     this.drawIsoTile({'x': x, 'y': y}, this.tiles[this.layers[l][y][x]], ctx);
                 }
             }                      
-        }
+        } */
+        this.drawIsoTilesWithinCanvasFrame(ctx);
 
         if (this.showGrid) {
             this.drawIsoGrid(ctx);
@@ -280,22 +326,17 @@ class IsoCanvas {
         if (event.deltaY < 0) {
             this._zoom = this._zoom*(1.05);
             this._zoomInverse = 1.0/this._zoom;
-            var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
-            var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
-            var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
-            var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
-            this._canvasTileSize.x = size2.x - size1.x;
-            this._canvasTileSize.y = size4.y - size3.y;
         } else {
             this._zoom = this._zoom*(0.95);
-            this._zoomInverse = 1.0/this._zoom;
-            var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
-            var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
-            var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
-            var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
-            this._canvasTileSize.x = size2.x - size1.x;
-            this._canvasTileSize.y = size4.y - size3.y;			
+            this._zoomInverse = 1.0/this._zoom;			
         }
+        
+        var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
+        var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
+        var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
+        var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
+        this._canvasTileSize.x = size2.x - size1.x;
+        this._canvasTileSize.y = size4.y - size3.y;
         
     }
     
