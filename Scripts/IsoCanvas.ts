@@ -1,4 +1,7 @@
-class IsoCanvas {
+// compile with 
+// tsc isocanvas --module amd
+import isoTile = require('./isotile');
+export class IsoCanvas {
 
     private _div: HTMLDivElement;
     private _canvas: HTMLCanvasElement;
@@ -20,6 +23,7 @@ class IsoCanvas {
     public tiles = [];
     public showAxes = true;
     public showGrid = true;
+    public test: isoTile.IsoTile;
 
     constructor(delagateDiv: HTMLDivElement) {
 
@@ -98,9 +102,13 @@ class IsoCanvas {
 
     drawIsoTile(isoCoord:  {'x': number, 'y': number}, img: HTMLImageElement, ctx: CanvasRenderingContext2D) {
 
-        var pX = this.isoToCanvasCoords({'x': isoCoord.x -.5, 'y': isoCoord.y +.5});
+        var c = this.isoToCanvasCoords({'x': isoCoord.x -.5, 'y': isoCoord.y +.5});
 
-        ctx.drawImage(img, pX.x, pX.y, this._canvasTileSize.x, this._canvasTileSize.y);
+        if (img.height == img.width) {
+            ctx.drawImage(img, c.x, c.y - this._canvasTileSize.y, this._canvasTileSize.x, this._canvasTileSize.x);
+        } else {
+            ctx.drawImage(img, c.x, c.y, this._canvasTileSize.x, this._canvasTileSize.y);
+        }
     }
 
     drawIsoTilesWithinCanvasFrame(ctx: CanvasRenderingContext2D) {
@@ -147,7 +155,7 @@ class IsoCanvas {
         }
     }
 
-    drawAxes(ctx: CanvasRenderingContext2D) {
+    drawCartesianAxes(ctx: CanvasRenderingContext2D) {
 
         var northWest = {"x":0, "y":0};
         var southEast = {"x": this._canvas.width, "y": this._canvas.height};
@@ -291,24 +299,16 @@ class IsoCanvas {
         var ctx = this._canvas.getContext('2d');
         this.clearCanvas(ctx);
 
-        // draw tilemap
-/*         for (var l = 0; l < this.layers.length; l++) {
-            for (var y = 0; y < this.layers[l].length; y++) {
-                for (var x = 0; x < this.layers[l][y].length; x++) {
-                    this.drawIsoTile({'x': x, 'y': y}, this.tiles[this.layers[l][y][x]], ctx);
-                }
-            }                      
-        } */
-        this.drawIsoTilesWithinCanvasFrame(ctx);
-
         if (this.showGrid) {
             this.drawIsoGrid(ctx);
         }
 
         if (this.showAxes) {
             this.drawIsoAxes(ctx);
-            //this.drawAxes();
         }
+
+        this.drawIsoTilesWithinCanvasFrame(ctx);
+
     }
 
     // Event Listeners
@@ -452,3 +452,4 @@ class IsoCanvas {
     }
 
 }
+

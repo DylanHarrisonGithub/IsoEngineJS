@@ -1,67 +1,67 @@
 <!DOCTYPE html>
 <html style="width:100%; height:100%;">
     <head>
-        <link rel="stylesheet" type="text/css" href="css/reset.css">
-        <script src="scripts/isocanvas.js"></script>
+        <link rel="stylesheet" type="text/css" href="css/reset.css">       
+        <script src="scripts/requirejs.js"></script>
+        <!--<script src="scripts/isotile.js"></script>
+        <script src="scripts/isocanvas.js"></script>-->
         <script type="text/javascript">
             function f() {
 
-                var isoCanvas = new IsoCanvas(document.getElementById('isoCanvasDiv'));
+                requirejs(['scripts/isotile', 'scripts/isocanvas'], function(isoTileNameSpace, isoCanvasNameSpace) {
 
-                // load up tiles
-                var imgs = [];
-                var loadedCounter = 0;
-                var numImages = 10;
-                for (var i = 0; i < 10; i++) {
+                    var isoCanvas = new isoCanvasNameSpace.IsoCanvas(document.getElementById('isoCanvasDiv'));
 
-                    imgs.push(new Image());
+                    // load up tiles
+                    var imgs = [];
+                    var loadedCounter = 0;
+                    var numImages = 4;
+                    for (var i = 0; i < numImages; i++) {
 
-                    imgs[i].onload = function() {
+                        imgs.push(new Image());
 
-                        loadedCounter++;
-                        if (loadedCounter == numImages) {
-                            isoCanvas.tiles = imgs;
-                            isoCanvas.layers.push(generateMap());
-                            isoCanvas.paint();
-                            window.addEventListener('resize', function(ev) {
-                                //isoCanvas.defaultResizeListener(ev);
+                        imgs[i].onload = function() {
+
+                            loadedCounter++;
+                            if (loadedCounter == numImages) {
+                                isoCanvas.tiles = imgs;
+                                isoCanvas.layers.push(generateMap(numImages));
                                 isoCanvas.paint();
-                            });
-                            window.addEventListener('click', function(ev) {                                
-                                isoCanvas.defaultMouseClickListener(ev);
-                                isoCanvas.paint();
-                            });
-                            window.addEventListener('wheel', function(ev) {
-                                isoCanvas.defaultMouseWheelListener(ev);
-                                isoCanvas.paint();
-                            });
-                        }
-                    };
-                }
-                imgs[0].src = 'Tiles/brickpavers2.png';
-                imgs[1].src = 'Tiles/concrete368a.png';
-                imgs[2].src = 'Tiles/cretebrick970.png';
-                imgs[3].src = 'Tiles/dirt.png';
-                imgs[4].src = 'Tiles/dirtsand2.png';
-                imgs[5].src = 'Tiles/rock.png';
-                imgs[6].src = 'Tiles/snow.png';
-                imgs[7].src = 'Tiles/stone.png';
-                imgs[8].src = 'Tiles/tilable-IMG_0044-grey.png';
-                imgs[9].src = 'Tiles/tileable-S7002876-grey.png';
+                                window.addEventListener('resize', function(ev) {
+                                    //isoCanvas.defaultResizeListener(ev);
+                                    isoCanvas.paint();
+                                });
+                                window.addEventListener('click', function(ev) {                                
+                                    isoCanvas.defaultMouseClickListener(ev);
+                                    isoCanvas.paint();
+                                });
+                                window.addEventListener('wheel', function(ev) {
+                                    isoCanvas.defaultMouseWheelListener(ev);
+                                    isoCanvas.paint();
+                                });
+                            }
+                        };
+                    }
+                    imgs[0].src = 'Tiles/grass1.png';
+                    imgs[1].src = 'Tiles/grass2.png';
+                    imgs[2].src = 'Tiles/grass3.png';
+                    imgs[3].src = 'Tiles/water1.png';                    
+                });
 
             }
 
-            function generateMap() {
+            function generateMap(numTiles) {
                 // generate random map
                 var layer = []
                 for (var y = 0; y < 100; y++) {
                     layer.push([]);
                     for (var x = 0; x < 100; x++) {
-                        layer[y].push(Math.floor(Math.random()*10));
+                        layer[y].push(Math.floor(Math.random()*numTiles));
                     }
                 }
                 return layer;
             }
+        
 
         </script>
     </head>
