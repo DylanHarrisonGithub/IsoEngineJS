@@ -40,4 +40,32 @@ export class IsoTile {
         }
     }
 
+    static loadTileset(filenames: string[], onload: (tileset: IsoTile[]) => void) {
+
+        var images: HTMLImageElement[] = [];
+        var numImages = filenames.length;
+        var loadedCounter = 0;
+
+        for (let i = 0; i < filenames.length; i++) {
+
+            images.push(new Image());
+            images[images.length-1].onload = function() {
+
+                loadedCounter++;
+                if (loadedCounter == numImages) {
+
+                    var tileset: IsoTile[] = [];
+                    for (var img of images) {
+                        tileset.push(new IsoTile(img, null));
+                    }
+                    onload(tileset);
+                }
+            }
+
+        }
+        for (let i = 0; i < filenames.length; i++) {            
+            images[i].src = filenames[i];
+        }
+    }
+
 }
