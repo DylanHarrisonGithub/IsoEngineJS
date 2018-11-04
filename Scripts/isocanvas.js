@@ -17,7 +17,7 @@ define(["require", "exports"], function (require, exports) {
             this.axesColor = '#000000';
             this.gridColor = '#A0A0C0';
             this.backgroundColor = '#ffffff';
-            this.layers = [];
+            this.map = [];
             this.tiles = [];
             this.showAxes = true;
             this.showGrid = true;
@@ -97,25 +97,39 @@ define(["require", "exports"], function (require, exports) {
             var b = this.canvasToIsoCoords({ 'x': this._canvas.width, 'y': 0 });
             var c = this.canvasToIsoCoords({ "x": this._canvas.width, "y": this._canvas.height });
             var d = this.canvasToIsoCoords({ 'x': 0, 'y': this._canvas.height });
-            // make sure corners form a perfect box
-            a.x = Math.floor(a.x) - 1;
+            // adjust so that corners form a perfect rectangle
+            a.x = Math.floor(a.x) - 1; // slightly larger that screen
             a.y = Math.floor(a.y);
             b.x = Math.floor(b.x);
             b.y = a.y - b.x + a.x;
             c.y = Math.floor(c.y);
             c.x = c.y - b.y + b.x;
-            d.x = ((c.x + c.y) + (a.x - a.y)) / 2;
+            d.x = ((c.x + c.y) + (a.x - a.y)) / 2; // ?prove always divisible?
             d.y = ((c.x + c.y) - (a.x - a.y)) / 2;
+            // begin curser in upper left corner of rectangle
             var u = { 'x': a.x, 'y': a.y };
-            var height = 2 * (d.y - a.y) + 1;
+            var height = 2 * (d.y - a.y) + 1; // breaks?
+            // work downward from top row
             for (var diagonal = 0; diagonal < height; diagonal++) {
                 while ((u.x <= b.x) && (u.y >= b.y)) {
-                    if ((u.x > -1) && (u.x < this.layers[0][0].length) && (u.y > -1) && (u.y < this.layers[0].length)) {
-                        this.drawIsoTile({ 'x': u.x, 'y': u.y }, this.tiles[this.layers[0][u.y][u.x]], ctx);
+                    if ((u.x > -1) && (u.x < this.map[0].length) && (u.y > -1) && (u.y < this.map.length)) {
+                        // draw tiles from ground up
+                        var stackingHeight = 0;
+                        for (var level = 0; level < this.map[u.y][u.x].length; level++) {
+                            // todo: detect if tile is visible or obscured to speed up drawing
+                            this.drawIsoTile({ 'x': u.x - stackingHeight, 'y': u.y - stackingHeight }, this.tiles[this.map[u.y][u.x][level]].image, ctx);
+                            stackingHeight += this.tiles[this.map[u.y][u.x][level]].stackingHeight;
+                        }
                     }
+                    // move cursor diagonal left
                     u.x++;
                     u.y--;
                 }
+                // proceen downward in zigzag fashion
+                // /  \
+                // \  /
+                // /  \
+                // ..
                 if (diagonal % 2 == 1) {
                     b.y++;
                     a.x++;
@@ -124,7 +138,7 @@ define(["require", "exports"], function (require, exports) {
                     b.x++;
                     a.y++;
                 }
-                u = { 'x': a.x, 'y': a.y };
+                u = { 'x': a.x, 'y': a.y }; // set cursor to next diagonal row
             }
         };
         IsoCanvas.prototype.drawCartesianAxes = function (ctx) {

@@ -24,8 +24,16 @@
 
                             loadedCounter++;
                             if (loadedCounter == numImages) {
-                                isoCanvas.tiles = imgs;
-                                isoCanvas.layers.push(generateMap(numImages));
+                                // wrap imgs as isotiles
+                                var isoTiles = [];
+                                for (var i = 0; i < imgs.length; i++) {
+                                    isoTiles.push(new isoTileNameSpace.IsoTile(imgs[i], null));
+                                    isoTiles[i].canStack = false; 
+                                }            
+                                isoTiles[numImages-1].canStack = true;
+                                console.log(isoTiles);                   
+                                isoCanvas.tiles = isoTiles;
+                                isoCanvas.map = generateMap(numImages, isoTiles);
                                 isoCanvas.paint();
                                 window.addEventListener('resize', function(ev) {
                                     //isoCanvas.defaultResizeListener(ev);
@@ -51,16 +59,25 @@
 
             }
 
-            function generateMap(numTiles) {
+            function generateMap(numTiles, isoTiles) {
                 // generate random map
-                var layer = []
+                var map = []
+                var maxHeight = 12;
+                var height = 0;
                 for (var y = 0; y < 100; y++) {
-                    layer.push([]);
+                    map.push([]);
                     for (var x = 0; x < 100; x++) {
-                        layer[y].push(Math.floor(Math.random()*numTiles));
+                        map[y].push([]);
+                        height = Math.floor(Math.random()*maxHeight);
+                        for (var h = 0; h < height; h++) {
+                            map[y][x].push(Math.floor(Math.random()*numTiles));
+                            if (isoTiles[map[y][x][h]].canStack == false) {
+                                break;
+                            }
+                        }
                     }
                 }
-                return layer;
+                return map;
             }
         
 
