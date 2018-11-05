@@ -9,7 +9,7 @@ export class IsoCanvas {
     private _tileSize = {'x': 64, 'y': 32};
     private _doubleTileSizeInverse = {'x': 1.0 /(2*64), 'y': 1.0 /(2*32)};   
     private _canvasTileSize = {'x': 64, 'y': 32};
-    private _zoom =  1.0;
+    private _zoom = 1.0;
     private _zoomInverse = 1.0;
     private _halfResolution = {'x': 0, 'y': 0};
     private _mouseCanvas = {'x': 0, 'y': 0};
@@ -326,6 +326,66 @@ export class IsoCanvas {
         this.drawIsoTilesWithinCanvasFrame(ctx);
 
     }
+
+    // map methods
+    generateRandomMap(width: number, length: number, maxHeight: number) {
+        let map = []
+        let height = 0;
+        for (let y = 0; y < length; y++) {
+            map.push([]);
+            for (let x = 0; x < width; x++) {
+                map[y].push([]);
+                height = Math.floor(Math.random()*maxHeight);
+                for (let h = 0; h < height; h++) {
+                    map[y][x].push(Math.floor(Math.random()*this.tiles.length));
+                    if (this.tiles[map[y][x][h]].canStack == false) {
+                        break;
+                    }
+                }
+            }
+        }
+        this.map = map;
+    }
+
+    saveMap(filename: string) {
+        let tilesrc = [];
+        for (let tile of this.tiles) {
+            tilesrc.push(tile.image.src);
+        }
+        let mapDimensions = {'x': 0, 'y': 0};
+        if (this.map) {
+            mapDimensions.y = this.map.length;
+            if (this.map[0]) {
+                mapDimensions.x = this.map[0].length;
+            }
+        }
+        let file = new Blob([JSON.stringify({
+            'mapDimensions': mapDimensions,
+            'tileset': tilesrc,
+            'map': this.map
+        })], {type: 'application/json'});
+        let anchor = document.createElement('a');
+        let url = URL.createObjectURL(file);
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        setTimeout(function() {
+            document.body.removeChild(anchor);
+            window.URL.revokeObjectURL(url);  
+        }, 0);       
+    }
+
+/*     loadMap(filename) {
+        //let filer = new FileReader();
+        //let file = JSON.parse(filer.readAsText(filename));
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '127.0.0.1:5500/' + filename);
+        xhr.onload = function() {
+            console.log(xhr.responseText);
+        }
+        xhr.send();
+    } */
 
     // Event Listeners
     defaultMouseMoveListener(event) {
