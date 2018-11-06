@@ -1,4 +1,4 @@
-define(["require", "exports"], function (require, exports) {
+define(["require", "exports", "./isotile"], function (require, exports, isoTile) {
     "use strict";
     exports.__esModule = true;
     var IsoCanvas = /** @class */ (function () {
@@ -14,6 +14,7 @@ define(["require", "exports"], function (require, exports) {
             this._mouseCanvas = { 'x': 0, 'y': 0 };
             this._mouseCartesian = { 'x': 0, 'y': 0 };
             this._mouseIso = { 'x': 0, 'y': 0 };
+            this._mouseCell = { 'x': 0, 'y': 0 };
             this.axesColor = '#000000';
             this.gridColor = '#A0A0C0';
             this.backgroundColor = '#ffffff';
@@ -120,12 +121,27 @@ define(["require", "exports"], function (require, exports) {
                             this.drawIsoTile({ 'x': u.x - stackingHeight, 'y': u.y - stackingHeight }, this.tiles[this.map[u.y][u.x][level]].image, ctx);
                             stackingHeight += this.tiles[this.map[u.y][u.x][level]].stackingHeight;
                         }
+                        // highlight mouseover tile
+                        if ((u.x == this._mouseCell.x) && (u.y == this._mouseCell.y)) {
+                            var hu = this.isoToCanvasCoords({ 'x': u.x - stackingHeight, 'y': u.y - stackingHeight });
+                            var hl = this.isoToCanvasCoords({ 'x': u.x - stackingHeight + 1, 'y': u.y - stackingHeight });
+                            var hd = this.isoToCanvasCoords({ 'x': u.x - stackingHeight + 1, 'y': u.y - stackingHeight + 1 });
+                            var hr = this.isoToCanvasCoords({ 'x': u.x - stackingHeight, 'y': u.y - stackingHeight + 1 });
+                            ctx.beginPath();
+                            ctx.moveTo(hu.x, hu.y);
+                            ctx.lineTo(hl.x, hl.y);
+                            ctx.lineTo(hd.x, hd.y);
+                            ctx.lineTo(hr.x, hr.y);
+                            ctx.closePath();
+                            ctx.fillStyle = '#8ed6ff';
+                            ctx.fill();
+                        }
                     }
                     // move cursor diagonal left
                     u.x++;
                     u.y--;
                 }
-                // proceen downward in zigzag fashion
+                // proceed downward in zigzag fashion
                 // /  \
                 // \  /
                 // /  \
@@ -285,6 +301,7 @@ define(["require", "exports"], function (require, exports) {
                     'map': this.map
                 })], { type: 'application/json' });
             var anchor = document.createElement('a');
+            anchor.setAttribute('style', 'display:none');
             var url = URL.createObjectURL(file);
             anchor.href = url;
             anchor.download = filename;
@@ -295,22 +312,67 @@ define(["require", "exports"], function (require, exports) {
                 window.URL.revokeObjectURL(url);
             }, 0);
         };
-        /*     loadMap(filename) {
-                //let filer = new FileReader();
-                //let file = JSON.parse(filer.readAsText(filename));
-                let xhr = new XMLHttpRequest();
-                xhr.open('GET', '127.0.0.1:5500/' + filename);
-                xhr.onload = function() {
-                    console.log(xhr.responseText);
+        IsoCanvas.prototype.loadMap = function () {
+            var _this = this;
+            var inputElement = document.createElement('input');
+            inputElement.setAttribute('type', 'file');
+            inputElement.setAttribute('style', 'display:none');
+            inputElement.addEventListener('change', function (ev) {
+                var fileList = ev.target.files;
+                if (fileList.length > 0) {
+                    var reader_1 = new FileReader();
+                    reader_1.onload = (function (e) {
+                        try {
+                            var mapDataJSON_1 = JSON.parse(reader_1.result.toString());
+                            // heavy duty file validation
+                            if (('mapDimensions' in mapDataJSON_1) && ('tileset' in mapDataJSON_1) && ('map' in mapDataJSON_1)) {
+                                if (('x' in mapDataJSON_1.mapDimensions) && ('y' in mapDataJSON_1.mapDimensions)) {
+                                    if ((mapDataJSON_1.map instanceof Array) &&
+                                        (typeof mapDataJSON_1.mapDimensions.x == 'number') &&
+                                        (typeof mapDataJSON_1.mapDimensions.y == 'number') &&
+                                        (mapDataJSON_1.tileset instanceof Array)) {
+                                        isoTile.IsoTile.loadTileset(mapDataJSON_1.tileset, function (tileset) {
+                                            _this.tiles = tileset;
+                                            _this.map = mapDataJSON_1.map;
+                                            _this.paint();
+                                        });
+                                    }
+                                    else {
+                                        alert('a Invalid isomap file: ' + fileList[0].name);
+                                    }
+                                }
+                                else {
+                                    alert('b Invalid isomap file: ' + fileList[0].name);
+                                }
+                            }
+                            else {
+                                alert('c Invalid isomap file: ' + fileList[0].name);
+                            }
+                        }
+                        catch (_a) {
+                            alert('d Could not parse file: ' + fileList[0].name);
+                        }
+                    });
+                    reader_1.readAsText(fileList[0]);
                 }
-                xhr.send();
-            } */
+            }, false);
+            document.body.appendChild(inputElement);
+            inputElement.click();
+            setTimeout(function () {
+                document.body.removeChild(inputElement);
+            }, 0);
+        };
         // Event Listeners
         IsoCanvas.prototype.defaultMouseMoveListener = function (event) {
             var centerDivRect = this._div.getBoundingClientRect();
             this._mouseCanvas = { "x": event.clientX - centerDivRect.left, "y": event.clientY - centerDivRect.top };
             this._mouseCartesian = this.canvasToCartesianCoordinates(this._mouseCanvas);
             this._mouseIso = this.cartesianToIsoCoords(this._mouseCartesian);
+            if ((this._mouseCell.x != Math.floor(this._mouseIso.x)) || (this._mouseCell.y != Math.floor(this._mouseIso.y))) {
+                this._mouseCell.x = Math.floor(this._mouseIso.x);
+                this._mouseCell.y = Math.floor(this._mouseIso.y);
+                this.paint();
+            }
         };
         IsoCanvas.prototype.defaultMouseWheelListener = function (event) {
             if (event.deltaY < 0) {

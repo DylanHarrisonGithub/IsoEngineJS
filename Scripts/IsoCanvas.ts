@@ -15,6 +15,7 @@ export class IsoCanvas {
     private _mouseCanvas = {'x': 0, 'y': 0};
     private _mouseCartesian = {'x': 0, 'y': 0};
     private _mouseIso = {'x': 0, 'y': 0};
+    private _mouseCell = {'x': 0, 'y': 0};
     
     public axesColor = '#000000';
     public gridColor = '#A0A0C0';
@@ -149,13 +150,28 @@ export class IsoCanvas {
                         // todo: detect if tile is visible or obscured to speed up drawing
                         this.drawIsoTile({'x': u.x -stackingHeight, 'y': u.y - stackingHeight}, this.tiles[this.map[u.y][u.x][level]].image, ctx);
                         stackingHeight += this.tiles[this.map[u.y][u.x][level]].stackingHeight;
+                    }
+                    // highlight mouseover tile
+                    if ((u.x == this._mouseCell.x) && (u.y == this._mouseCell.y)) {
+                        let hu = this.isoToCanvasCoords({'x': u.x -stackingHeight, 'y': u.y - stackingHeight});
+                        let hl = this.isoToCanvasCoords({'x': u.x -stackingHeight +1, 'y': u.y - stackingHeight});
+                        let hd = this.isoToCanvasCoords({'x': u.x -stackingHeight +1, 'y': u.y - stackingHeight +1});
+                        let hr = this.isoToCanvasCoords({'x': u.x -stackingHeight, 'y': u.y - stackingHeight +1});
+                        ctx.beginPath();
+                        ctx.moveTo(hu.x, hu.y);
+                        ctx.lineTo(hl.x, hl.y);
+                        ctx.lineTo(hd.x, hd.y);
+                        ctx.lineTo(hr.x, hr.y);
+                        ctx.closePath();
+                        ctx.fillStyle = '#8ed6ff';
+                        ctx.fill();                      
                     }                    
                 }
                 // move cursor diagonal left
                 u.x++;
                 u.y--;
             }
-            // proceen downward in zigzag fashion
+            // proceed downward in zigzag fashion
             // /  \
             // \  /
             // /  \
@@ -365,6 +381,7 @@ export class IsoCanvas {
             'map': this.map
         })], {type: 'application/json'});
         let anchor = document.createElement('a');
+        anchor.setAttribute('style', 'display:none');
         let url = URL.createObjectURL(file);
         anchor.href = url;
         anchor.download = filename;
@@ -376,16 +393,55 @@ export class IsoCanvas {
         }, 0);       
     }
 
-/*     loadMap(filename) {
-        //let filer = new FileReader();
-        //let file = JSON.parse(filer.readAsText(filename));
-        let xhr = new XMLHttpRequest();
-        xhr.open('GET', '127.0.0.1:5500/' + filename);
-        xhr.onload = function() {
-            console.log(xhr.responseText);
-        }
-        xhr.send();
-    } */
+    loadMap() {
+        let inputElement = document.createElement('input');
+        inputElement.setAttribute('type', 'file');
+        inputElement.setAttribute('style', 'display:none');
+        inputElement.addEventListener('change', (ev) => {
+            let fileList = (<HTMLInputElement>ev.target).files;
+            if (fileList.length > 0) {
+                let reader = new FileReader();
+                reader.onload = ((e) => {
+                    try {
+
+                        let mapDataJSON = JSON.parse(reader.result.toString());
+
+                        // heavy duty file validation
+                        if (('mapDimensions' in mapDataJSON) && ('tileset' in mapDataJSON) && ('map' in mapDataJSON)) {
+                            if (('x' in mapDataJSON.mapDimensions) && ('y' in mapDataJSON.mapDimensions)) {
+                                if ((mapDataJSON.map instanceof Array) &&
+                                    (typeof mapDataJSON.mapDimensions.x == 'number') &&
+                                    (typeof mapDataJSON.mapDimensions.y == 'number') &&
+                                    (mapDataJSON.tileset instanceof Array)) {
+
+                                        isoTile.IsoTile.loadTileset(mapDataJSON.tileset, (tileset: isoTile.IsoTile[]) => {
+                                            this.tiles = tileset; 
+                                            this.map = mapDataJSON.map;
+                                            this.paint();
+                                        });
+                                        
+                                    } else {
+                                        alert('a Invalid isomap file: ' + fileList[0].name);
+                                    }
+                            } else {
+                                alert('b Invalid isomap file: ' + fileList[0].name);
+                            }
+                        } else {
+                            alert('c Invalid isomap file: ' + fileList[0].name);
+                        }
+                    } catch {
+                        alert('d Could not parse file: ' + fileList[0].name);
+                    }                    
+                });
+                reader.readAsText(fileList[0]);
+            }
+        }, false);
+        document.body.appendChild(inputElement);
+        inputElement.click();
+        setTimeout(function() {
+            document.body.removeChild(inputElement);  
+        }, 0);   
+    }
 
     // Event Listeners
     defaultMouseMoveListener(event) {
@@ -393,8 +449,12 @@ export class IsoCanvas {
         var centerDivRect = this._div.getBoundingClientRect();
         this._mouseCanvas = {"x": event.clientX-centerDivRect.left, "y": event.clientY-centerDivRect.top};
         this._mouseCartesian = this.canvasToCartesianCoordinates(this._mouseCanvas);
-        this._mouseIso = this.cartesianToIsoCoords(this._mouseCartesian);
-        
+        this._mouseIso = this.cartesianToIsoCoords(this._mouseCartesian);        
+        if ((this._mouseCell.x != Math.floor(this._mouseIso.x)) || (this._mouseCell.y != Math.floor(this._mouseIso.y))) {
+            this._mouseCell.x = Math.floor(this._mouseIso.x);
+            this._mouseCell.y = Math.floor(this._mouseIso.y);
+            this.paint();
+        }
     }
     
     defaultMouseWheelListener(event) {
