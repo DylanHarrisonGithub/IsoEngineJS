@@ -2,18 +2,23 @@
 // tsc isotile --module amd
 export class IsoTile {
 
-    image: HTMLImageElement;
-    canStack = true;
-    stackingHeight = 1.0;
-    isClipped = true;
-    isRamp = false;
-    isSouthNorthRamp = false;
-    isEastWestRamp = false;
-    isHidden = false;
+    public image: HTMLImageElement;
+    public subImage = {'x': 0, 'y': 0, 'width': 0, 'height': 0}; 
+    public canStack = true;
+    public stackingHeight = 1.0;
+    public isClipped = true;
+    public isRamp = false;
+    public isSouthNorthRamp = false;
+    public isEastWestRamp = false;
+    public isHidden = false;
 
     constructor(img: HTMLImageElement, params: Object) {
 
         this.image = img;
+        this.subImage.x = 0;
+        this.subImage.y = 0;
+        this.subImage.width = this.image.width;
+        this.subImage.height = this.image.height;
 
         if (params) {
             if ('canStack' in params) {
@@ -36,6 +41,16 @@ export class IsoTile {
             }        
             if ('isHidden' in params) {
                 this.isHidden = params['isHidden'];
+            }
+            if ('subImage' in params) {
+                if (('x' in params['subImage']) && ('y' in params['subImage'])) {
+                    this.subImage.x = params['subImage']['x'];
+                    this.subImage.y = params['subImage']['y'];
+                }
+                if (('width' in params['subImage']) && ('height' in params['subImage'])) {
+                    this.subImage.width = params['subImage']['width'];
+                    this.subImage.height = params['subImage']['height'];
+                }
             }
         }
     }

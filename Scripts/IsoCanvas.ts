@@ -100,12 +100,15 @@ export class IsoCanvas {
         ctx.fillRect(0,0,this._canvas.width,this._canvas.height);
     }
 
-    drawIsoTile(isoCoord:  {'x': number, 'y': number}, img: HTMLImageElement, ctx: CanvasRenderingContext2D) {
+    drawIsoTile(isoCoord:  {'x': number, 'y': number}, tile: isoTile.IsoTile, ctx: CanvasRenderingContext2D) {
 
-        var c = this.isoToCanvasCoords({'x': isoCoord.x -.5, 'y': isoCoord.y +.5});
+        let img = tile.image;
+        let c = this.isoToCanvasCoords({'x': isoCoord.x -.5, 'y': isoCoord.y +.5});
 
         if (img.height == img.width) {
-            ctx.drawImage(img, c.x, c.y - this._canvasTileSize.y, this._canvasTileSize.x, this._canvasTileSize.x);
+            ctx.drawImage(img,
+                tile.subImage.x, tile.subImage.y, tile.subImage.width, tile.subImage.height,
+                c.x, c.y - this._canvasTileSize.y, this._canvasTileSize.x, this._canvasTileSize.x);
         } else {
             ctx.drawImage(img, c.x, c.y, this._canvasTileSize.x, this._canvasTileSize.y);
         }
@@ -148,7 +151,7 @@ export class IsoCanvas {
                     for (var level = 0; level < this.map[u.y][u.x].length; level++) {
                         
                         // todo: detect if tile is visible or obscured to speed up drawing
-                        this.drawIsoTile({'x': u.x -stackingHeight, 'y': u.y - stackingHeight}, this.tiles[this.map[u.y][u.x][level]].image, ctx);
+                        this.drawIsoTile({'x': u.x -stackingHeight, 'y': u.y - stackingHeight}, this.tiles[this.map[u.y][u.x][level]], ctx);
                         stackingHeight += this.tiles[this.map[u.y][u.x][level]].stackingHeight;
                     }
                     // highlight mouseover tile
