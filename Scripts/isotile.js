@@ -5,49 +5,51 @@ define(["require", "exports"], function (require, exports) {
     // tsc isotile --module amd
     var IsoTile = /** @class */ (function () {
         function IsoTile(img, params) {
-            this.subImage = { 'x': 0, 'y': 0, 'width': 0, 'height': 0 };
-            this.canStack = true;
-            this.stackingHeight = 1.0;
-            this.isClipped = true;
-            this.isRamp = false;
-            this.isSouthNorthRamp = false;
-            this.isEastWestRamp = false;
-            this.isHidden = false;
+            this.properties = {
+                'subImage': { 'x': 0, 'y': 0, 'width': 0, 'height': 0 },
+                'canStack': true,
+                'stackingHeight': 1.0,
+                'isClipped': true,
+                'isRamp': false,
+                'isSouthNorthRamp': false,
+                'isEastWestRamp': false,
+                'isHidden': false
+            };
             this.image = img;
-            this.subImage.x = 0;
-            this.subImage.y = 0;
-            this.subImage.width = this.image.width;
-            this.subImage.height = this.image.height;
+            this.properties.subImage.x = 0;
+            this.properties.subImage.y = 0;
+            this.properties.subImage.width = this.image.width;
+            this.properties.subImage.height = this.image.height;
             if (params) {
                 if ('canStack' in params) {
-                    this.canStack = params['canStack'];
+                    this.properties.canStack = params['canStack'];
                 }
                 if ('stackingHeight' in params) {
-                    this.stackingHeight = params['stackingHeight'];
+                    this.properties.stackingHeight = params['stackingHeight'];
                 }
                 if ('isClipped' in params) {
-                    this.isClipped = params['isClipped'];
+                    this.properties.isClipped = params['isClipped'];
                 }
                 if ('isRamp' in params) {
-                    this.isRamp = params['isRamp'];
+                    this.properties.isRamp = params['isRamp'];
                 }
                 if ('isSouthNorthRamp' in params) {
-                    this.isSouthNorthRamp = params['isSouthNorthRamp'];
+                    this.properties.isSouthNorthRamp = params['isSouthNorthRamp'];
                 }
                 if ('isEastWestRamp' in params) {
-                    this.isEastWestRamp = params['isEastWestRamp'];
+                    this.properties.isEastWestRamp = params['isEastWestRamp'];
                 }
                 if ('isHidden' in params) {
-                    this.isHidden = params['isHidden'];
+                    this.properties.isHidden = params['isHidden'];
                 }
                 if ('subImage' in params) {
                     if (('x' in params['subImage']) && ('y' in params['subImage'])) {
-                        this.subImage.x = params['subImage']['x'];
-                        this.subImage.y = params['subImage']['y'];
+                        this.properties.subImage.x = params['subImage']['x'];
+                        this.properties.subImage.y = params['subImage']['y'];
                     }
                     if (('width' in params['subImage']) && ('height' in params['subImage'])) {
-                        this.subImage.width = params['subImage']['width'];
-                        this.subImage.height = params['subImage']['height'];
+                        this.properties.subImage.width = params['subImage']['width'];
+                        this.properties.subImage.height = params['subImage']['height'];
                     }
                 }
             }

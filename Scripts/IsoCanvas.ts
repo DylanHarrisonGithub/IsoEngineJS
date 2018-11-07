@@ -107,7 +107,7 @@ export class IsoCanvas {
 
         if (img.height == img.width) {
             ctx.drawImage(img,
-                tile.subImage.x, tile.subImage.y, tile.subImage.width, tile.subImage.height,
+                tile.properties.subImage.x, tile.properties.subImage.y, tile.properties.subImage.width, tile.properties.subImage.height,
                 c.x, c.y - this._canvasTileSize.y, this._canvasTileSize.x, this._canvasTileSize.x);
         } else {
             ctx.drawImage(img, c.x, c.y, this._canvasTileSize.x, this._canvasTileSize.y);
@@ -152,7 +152,7 @@ export class IsoCanvas {
                         
                         // todo: detect if tile is visible or obscured to speed up drawing
                         this.drawIsoTile({'x': u.x -stackingHeight, 'y': u.y - stackingHeight}, this.tiles[this.map[u.y][u.x][level]], ctx);
-                        stackingHeight += this.tiles[this.map[u.y][u.x][level]].stackingHeight;
+                        stackingHeight += this.tiles[this.map[u.y][u.x][level]].properties.stackingHeight;
                     }
                     // highlight mouseover tile
                     if ((u.x == this._mouseCell.x) && (u.y == this._mouseCell.y)) {
@@ -357,7 +357,7 @@ export class IsoCanvas {
                 height = Math.floor(Math.random()*maxHeight);
                 for (let h = 0; h < height; h++) {
                     map[y][x].push(Math.floor(Math.random()*this.tiles.length));
-                    if (this.tiles[map[y][x][h]].canStack == false) {
+                    if (this.tiles[map[y][x][h]].properties.canStack == false) {
                         break;
                     }
                 }

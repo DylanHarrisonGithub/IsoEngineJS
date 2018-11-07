@@ -7,7 +7,11 @@
             function f() {
 
                 // import IsoTile and IsoCanvas modules via requirejs
-                requirejs(['scripts/isotile', 'scripts/isocanvas'], function(isoTileNameSpace, isoCanvasNameSpace) {
+                requirejs([
+                    'scripts/isotile', 
+                    'scripts/isocanvas',
+                    'scripts/isotileset'
+                ], function(isoTileNameSpace, isoCanvasNameSpace, isoTileSetNameSpace) {
 
                     var images = [
                         'Tiles/grass1.png',
@@ -22,13 +26,27 @@
 
                         isoCanvas.tiles = isoTileset;
                         for (isotile of isoTileset) {
-                            isotile.canStack = false;
+                            isotile.properties.canStack = false;
                         }
-                        isoTileset[isoTileset.length-1].canStack = true;
+                        isoTileset[isoTileset.length-1].properties.canStack = true;
 
                         isoCanvas.generateRandomMap(100, 100, 10);
                         //isoCanvas.saveMap('randomIsoMap.json');
                         //isoCanvas.loadMap();
+
+/*                         let testSet = new isoTileSetNameSpace.IsoTileSet();
+                        testSet.isoTileSetName = 'testSet';
+                        for (let t of isoTileset) {
+                            if (!testSet._images.includes(t.image)) {
+                                testSet._images.push(t.image);
+                            }
+                            testSet._isoTiles.push(t);
+                        }
+                        testSet.save(); */
+                        let testSet = isoTileSetNameSpace.IsoTileSet.loadIsoTileSet('tiles/testSet.json', function(set) {
+                            console.log(set);
+                        });
+
                         isoCanvas.paint();
                         window.addEventListener('resize', function(ev) {
                             isoCanvas.paint();
