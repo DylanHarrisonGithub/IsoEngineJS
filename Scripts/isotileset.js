@@ -7,76 +7,50 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             this._images = [];
             this._isoTiles = [];
         }
-        IsoTileSet.prototype.loadImageFile = function (filenames, onload) {
-        };
-        IsoTileSet.loadIsoTileSet = function (filename, onload) {
-            fetch(filename).then(function (res) { return res.json(); }).then(function (data) {
-                if (('isoTileSetName' in data) && ('imageFileNames' in data) && ('isoTilesData' in data)) {
-                    if (typeof data.isoTileSetName == 'string' &&
-                        data.imageFileNames instanceof Array &&
-                        data.isoTilesData instanceof Array) {
-                        var loadedTileSet_1 = new IsoTileSet();
-                        loadedTileSet_1.isoTileSetName = data.isoTileSetName;
-                        var images_1 = [];
-                        var numImages_1 = data.imageFileNames.length;
-                        var loadedCounter_1 = 0;
-                        for (var i = 0; i < numImages_1; i++) {
-                            images_1.push(new Image());
-                            images_1[images_1.length - 1].onload = function () {
-                                loadedCounter_1++;
-                                if (loadedCounter_1 == numImages_1) {
-                                    loadedTileSet_1._images = images_1;
-                                    var _loop_1 = function (tileData) {
-                                        if (loadedTileSet_1._images.find(function (it) { return it.src == tileData.imageFileName; }) != undefined) {
-                                            loadedTileSet_1._isoTiles.push(new isoTile.IsoTile(loadedTileSet_1._images.find(function (it) { return it.src == tileData.imageFileName; }), tileData.tileProperties));
-                                        }
-                                    };
-                                    for (var _i = 0, _a = data.isoTilesData; _i < _a.length; _i++) {
-                                        var tileData = _a[_i];
-                                        _loop_1(tileData);
-                                    }
-                                    onload(loadedTileSet_1);
-                                }
-                            };
-                            images_1[images_1.length - 1].onerror = function () {
-                                //console.log('image did not load');
-                                numImages_1--;
-                            };
-                        }
-                        for (var i = 0; i < data.imageFileNames.length; i++) {
-                            images_1[i].src = data.imageFileNames[i];
-                        }
-                    }
-                    else {
-                        alert('b invalid tileset');
-                    }
+        IsoTileSet.prototype.loadImageFromClient = function (onload) {
+            var _this = this;
+            var inputElement = document.createElement('input');
+            inputElement.setAttribute('type', 'file');
+            inputElement.setAttribute('style', 'display:none');
+            inputElement.addEventListener('change', function (ev) {
+                if (inputElement.files.length > 0) {
+                    var newImage_1 = new Image();
+                    var reader = new FileReader();
+                    reader.onload = (function (event) {
+                        newImage_1.src = event.target.result;
+                        newImage_1.onload = (function (event) {
+                            _this._images.push(newImage_1);
+                            onload();
+                        });
+                    });
+                    reader.readAsDataURL(inputElement.files[0]);
                 }
-                else {
-                    alert('a invalid tileset');
-                }
-            })["catch"](function (error) { return alert('invalid tileset: ' + error); });
+            }, false);
+            document.body.appendChild(inputElement);
+            inputElement.click();
+            setTimeout(function () {
+                document.body.removeChild(inputElement);
+            }, 0);
         };
-        IsoTileSet.prototype.mergeLoad = function () {
-        };
-        IsoTileSet.prototype.save = function () {
+        IsoTileSet.prototype.dumbSave = function () {
             var filename = this.isoTileSetName + '.json';
-            var imageFileNames = [];
+            var images = [];
             for (var _i = 0, _a = this._images; _i < _a.length; _i++) {
                 var img = _a[_i];
-                imageFileNames.push(img.src);
+                images.push(img.src);
             }
-            var isoTilesData = [];
+            var tiles = [];
             for (var _b = 0, _c = this._isoTiles; _b < _c.length; _b++) {
                 var tile = _c[_b];
-                isoTilesData.push({
-                    'imageFileName': tile.image.src,
-                    'tileProperties': tile.properties
+                tiles.push({
+                    'index': this._images.indexOf(tile.image),
+                    'properties': tile.properties
                 });
             }
             var file = new Blob([JSON.stringify({
                     'isoTileSetName': this.isoTileSetName,
-                    'imageFileNames': imageFileNames,
-                    'isoTilesData': isoTilesData
+                    'images': images,
+                    'tiles': tiles
                 })], { type: 'application/json' });
             var anchor = document.createElement('a');
             anchor.setAttribute('style', 'display:none');
@@ -88,6 +62,52 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             setTimeout(function () {
                 document.body.removeChild(anchor);
                 window.URL.revokeObjectURL(url);
+            }, 0);
+        };
+        IsoTileSet.prototype.dumbLoad = function (onload) {
+            var _this = this;
+            var inputElement = document.createElement('input');
+            inputElement.setAttribute('type', 'file');
+            inputElement.setAttribute('style', 'display:none');
+            inputElement.addEventListener('change', function (ev) {
+                if (inputElement.files.length > 0) {
+                    var reader = new FileReader();
+                    reader.onload = (function (event) {
+                        var file = JSON.parse(event.target.result);
+                        _this.isoTileSetName = file.isoTileSetName;
+                        _this._images = [];
+                        var numImages = file.images.length;
+                        var loadedCounter = 0;
+                        for (var _i = 0, _a = file.images; _i < _a.length; _i++) {
+                            var fileImg = _a[_i];
+                            var newImage = new Image();
+                            _this._images.push(newImage);
+                            newImage.onload = (function (event) {
+                                loadedCounter++;
+                                if (loadedCounter == numImages) {
+                                    _this._isoTiles = [];
+                                    for (var _i = 0, _a = file.tiles; _i < _a.length; _i++) {
+                                        var tile = _a[_i];
+                                        _this._isoTiles.push(new isoTile.IsoTile(_this._images[tile.index], tile.properties));
+                                    }
+                                    onload();
+                                }
+                            });
+                            newImage.onerror = function () {
+                                console.log('image did not load');
+                                numImages--;
+                            };
+                            newImage.src = fileImg;
+                        }
+                        onload();
+                    });
+                    reader.readAsText(inputElement.files[0]);
+                }
+            }, false);
+            document.body.appendChild(inputElement);
+            inputElement.click();
+            setTimeout(function () {
+                document.body.removeChild(inputElement);
             }, 0);
         };
         return IsoTileSet;

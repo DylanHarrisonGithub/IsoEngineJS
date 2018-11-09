@@ -10,90 +10,51 @@ export class IsoTileSet {
     constructor() {        
     }
 
-    loadImageFile(filenames: string[], onload: Function) {
-
-    }
-
-    static loadIsoTileSet(filename: string, onload: Function) {
-        fetch(filename).then(res => res.json()).then(data => {            
-            if (('isoTileSetName' in data) && ('imageFileNames' in data) && ('isoTilesData' in data)) {
-                if (typeof data.isoTileSetName == 'string' &&
-                    data.imageFileNames instanceof Array &&
-                    data.isoTilesData instanceof Array) {
-
-                        let loadedTileSet = new IsoTileSet();
-                        loadedTileSet.isoTileSetName = data.isoTileSetName;
-
-                        let images = [];
-                        let numImages = data.imageFileNames.length;
-                        let loadedCounter = 0;
-
-                        for (let i = 0; i < numImages; i++) {
-
-                            images.push(new Image());
-                            images[images.length-1].onload = function() {
-
-                                loadedCounter++;
-                                if (loadedCounter == numImages) {
-
-                                    loadedTileSet._images = images;
-
-                                    for (let tileData of data.isoTilesData) {
-                                        if (loadedTileSet._images.find(it => it.src == tileData.imageFileName) != undefined) {
-                                            loadedTileSet._isoTiles.push(new isoTile.IsoTile(
-                                                loadedTileSet._images.find(it => it.src == tileData.imageFileName),
-                                                tileData.tileProperties
-                                            ));
-                                        }
-                                    }
-                                    onload(loadedTileSet);
-                                }
-                            }
-                            images[images.length-1].onerror = function() {
-                                //console.log('image did not load');
-                                numImages--;
-                            }
-
-                        }
-                        for (let i = 0; i < data.imageFileNames.length; i++) {            
-                            images[i].src = data.imageFileNames[i];
-                        }
-
-                    } else {                        
-                        alert('b invalid tileset');
-                    }
-            } else {
-                alert('a invalid tileset');
+    loadImageFromClient(onload: Function) { 
+        let inputElement = document.createElement('input');
+        inputElement.setAttribute('type', 'file');
+        inputElement.setAttribute('style', 'display:none');
+        inputElement.addEventListener('change', (ev) => {
+            if (inputElement.files.length > 0) {
+                let newImage = new Image();
+                var reader = new FileReader();
+                reader.onload = ((event) => {
+                    newImage.src = (<any>event.target).result;
+                    newImage.onload = ((event) => {
+                        this._images.push(newImage);
+                        onload();
+                    });
+                });
+                reader.readAsDataURL(inputElement.files[0]);
             }
-        }).catch(error => alert('invalid tileset: ' + error));
-    }
+        }, false);
+        document.body.appendChild(inputElement);
+        inputElement.click();
+        setTimeout(function() {
+            document.body.removeChild(inputElement);  
+        }, 0);        
+    } 
 
-    mergeLoad() {
-
-    }
-
-    save() {
-
+    dumbSave() {
         let filename = this.isoTileSetName + '.json';
-        let imageFileNames = [];
+        
+        let images = [];
         for (let img of this._images) {
-            imageFileNames.push(img.src);
+            images.push(img.src);
         }
-
-        let isoTilesData = [];
+        
+        let tiles = [];
         for (let tile of this._isoTiles) {
-            isoTilesData.push({
-                'imageFileName': tile.image.src,
-                'tileProperties': tile.properties
+            tiles.push({
+                'index': this._images.indexOf(tile.image),
+                'properties': tile.properties
             });
         }
-
         let file = new Blob([JSON.stringify({
             'isoTileSetName': this.isoTileSetName,
-            'imageFileNames': imageFileNames,
-            'isoTilesData': isoTilesData
-        })], {type: 'application/json'});
-
+            'images': images,
+            'tiles': tiles            
+        })], {type: 'application/json'});        
         let anchor = document.createElement('a');
         anchor.setAttribute('style', 'display:none');
         let url = URL.createObjectURL(file);
@@ -104,8 +65,55 @@ export class IsoTileSet {
         setTimeout(function() {
             document.body.removeChild(anchor);
             window.URL.revokeObjectURL(url);  
-        }, 0);
+        }, 0);        
+    }
 
+    dumbLoad(onload: Function) {
+        let inputElement = document.createElement('input');
+        inputElement.setAttribute('type', 'file');
+        inputElement.setAttribute('style', 'display:none');
+        inputElement.addEventListener('change', (ev) => {
+            if (inputElement.files.length > 0) {
+                var reader = new FileReader();
+                reader.onload = ((event) => {
+                    let file = JSON.parse((<any>event.target).result);
+                    this.isoTileSetName = file.isoTileSetName;
+                    this._images = [];
+                    
+                    let numImages = file.images.length;
+                    let loadedCounter = 0;
+                    for (let fileImg of file.images) {
+                        let newImage = new Image();
+                        this._images.push(newImage);
+                        newImage.onload = ((event) => {
+                            loadedCounter++;
+                            if (loadedCounter == numImages) {
+                                this._isoTiles = [];
+                                for (let tile of file.tiles) {
+                                    this._isoTiles.push(new isoTile.IsoTile(
+                                        this._images[tile.index],
+                                        tile.properties
+                                    ));
+                                }
+                                onload();
+                            }
+                        });
+                        newImage.onerror = function() {
+                            console.log('image did not load');
+                            numImages--;
+                        }
+                        newImage.src = fileImg;
+                    }
+                    onload();
+                });
+                reader.readAsText(inputElement.files[0]);
+            }
+        }, false);
+        document.body.appendChild(inputElement);
+        inputElement.click();
+        setTimeout(function() {
+            document.body.removeChild(inputElement);  
+        }, 0);        
     }
 
 }
