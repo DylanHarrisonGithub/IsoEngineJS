@@ -3,7 +3,12 @@
 import isoTile = require('./isotile');
 export class IsoTileSet {
 
-    public isoTileSetName = 'untitledTileset';
+    public properties = {
+        tileSetName: 'untitled set',
+        isAnimation: false,
+        animationLoops: false,
+        fps: 0.0
+    };
     private _images: HTMLImageElement[] = [];
     private _isoTiles: isoTile.IsoTile[] = [];
 
@@ -36,7 +41,8 @@ export class IsoTileSet {
     } 
 
     dumbSave() {
-        let filename = this.isoTileSetName + '.json';
+
+        let filename = this.properties.tileSetName + '.json';
         
         let images = [];
         for (let img of this._images) {
@@ -51,7 +57,7 @@ export class IsoTileSet {
             });
         }
         let file = new Blob([JSON.stringify({
-            'isoTileSetName': this.isoTileSetName,
+            'properties': this.properties,
             'images': images,
             'tiles': tiles            
         })], {type: 'application/json'});        
@@ -77,9 +83,9 @@ export class IsoTileSet {
                 var reader = new FileReader();
                 reader.onload = ((event) => {
                     let file = JSON.parse((<any>event.target).result);
-                    this.isoTileSetName = file.isoTileSetName;
-                    this._images = [];
-                    
+                    this.properties = file.properties;
+
+                    this._images = [];                    
                     let numImages = file.images.length;
                     let loadedCounter = 0;
                     for (let fileImg of file.images) {

@@ -3,7 +3,12 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
     exports.__esModule = true;
     var IsoTileSet = /** @class */ (function () {
         function IsoTileSet() {
-            this.isoTileSetName = 'untitledTileset';
+            this.properties = {
+                tileSetName: 'untitled set',
+                isAnimation: false,
+                animationLoops: false,
+                fps: 0.0
+            };
             this._images = [];
             this._isoTiles = [];
         }
@@ -33,7 +38,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             }, 0);
         };
         IsoTileSet.prototype.dumbSave = function () {
-            var filename = this.isoTileSetName + '.json';
+            var filename = this.properties.tileSetName + '.json';
             var images = [];
             for (var _i = 0, _a = this._images; _i < _a.length; _i++) {
                 var img = _a[_i];
@@ -48,7 +53,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                 });
             }
             var file = new Blob([JSON.stringify({
-                    'isoTileSetName': this.isoTileSetName,
+                    'properties': this.properties,
                     'images': images,
                     'tiles': tiles
                 })], { type: 'application/json' });
@@ -74,7 +79,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                     var reader = new FileReader();
                     reader.onload = (function (event) {
                         var file = JSON.parse(event.target.result);
-                        _this.isoTileSetName = file.isoTileSetName;
+                        _this.properties = file.properties;
                         _this._images = [];
                         var numImages = file.images.length;
                         var loadedCounter = 0;

@@ -107,7 +107,7 @@ export class IsoCanvas {
 
         if (img.height == img.width) {
             ctx.drawImage(img,
-                tile.properties.subImage.x, tile.properties.subImage.y, tile.properties.subImage.width, tile.properties.subImage.height,
+                tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight,
                 c.x, c.y - this._canvasTileSize.y, this._canvasTileSize.x, this._canvasTileSize.x);
         } else {
             ctx.drawImage(img, c.x, c.y, this._canvasTileSize.x, this._canvasTileSize.y);

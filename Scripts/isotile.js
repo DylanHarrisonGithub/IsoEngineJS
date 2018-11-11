@@ -6,7 +6,10 @@ define(["require", "exports"], function (require, exports) {
     var IsoTile = /** @class */ (function () {
         function IsoTile(img, params) {
             this.properties = {
-                'subImage': { 'x': 0, 'y': 0, 'width': 0, 'height': 0 },
+                'subImageX': 0,
+                'subImageY': 0,
+                'subImageWidth': 0,
+                'subImageHeight': 0,
                 'canStack': true,
                 'stackingHeight': 1.0,
                 'isClipped': true,
@@ -16,10 +19,12 @@ define(["require", "exports"], function (require, exports) {
                 'isHidden': false
             };
             this.image = img;
-            this.properties.subImage.x = 0;
-            this.properties.subImage.y = 0;
-            this.properties.subImage.width = this.image.width;
-            this.properties.subImage.height = this.image.height;
+            this.properties.subImageX = 0;
+            this.properties.subImageY = 0;
+            if (img) {
+                this.properties.subImageWidth = this.image.width;
+                this.properties.subImageHeight = this.image.height;
+            }
             if (params) {
                 if ('canStack' in params) {
                     this.properties.canStack = params['canStack'];
@@ -42,15 +47,17 @@ define(["require", "exports"], function (require, exports) {
                 if ('isHidden' in params) {
                     this.properties.isHidden = params['isHidden'];
                 }
-                if ('subImage' in params) {
-                    if (('x' in params['subImage']) && ('y' in params['subImage'])) {
-                        this.properties.subImage.x = params['subImage']['x'];
-                        this.properties.subImage.y = params['subImage']['y'];
-                    }
-                    if (('width' in params['subImage']) && ('height' in params['subImage'])) {
-                        this.properties.subImage.width = params['subImage']['width'];
-                        this.properties.subImage.height = params['subImage']['height'];
-                    }
+                if ('subImageX' in params) {
+                    this.properties.subImageX = params['subImageX'];
+                }
+                if ('subImageY' in params) {
+                    this.properties.subImageX = params['subImageY'];
+                }
+                if ('subImageWidth' in params) {
+                    this.properties.subImageX = params['subImageWidth'];
+                }
+                if ('subImageHeight' in params) {
+                    this.properties.subImageX = params['subImageHeight'];
                 }
             }
         }
