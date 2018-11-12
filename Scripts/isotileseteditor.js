@@ -55,7 +55,11 @@ function newTile() {requirejs(['scripts/isotile','scripts/isotileset'], function
         drawSelectedTileToCanvas();
     }
     newTileLI.button.onclick = (e) => {
-        // todo
+        if (selectedTile == newTile) { selectedTile = null; }
+        let index = myTileset._isoTiles.indexOf(newTile);
+        myTileset._isoTiles.splice(index, 1);
+        listTiles();
+        drawSelectedTileToCanvas();
     }
 
     document.getElementById('tilesUL').appendChild(newTileLI.li);
@@ -109,11 +113,22 @@ function listTiles() {requirejs(['scripts/isotile','scripts/isotileset'], functi
             });            
         imgli.canvas.onclick = (e) => {
             selectedTile = t;
+            for (let l of e.target.parentNode.parentNode.children) {
+                l.style.borderColor = 'black';
+            }
+            imgli.li.style.borderColor = 'red';
             setPropertiesList(document.getElementById('tilePropertiesUL'), t, 'tile');
             drawSelectedTileToCanvas();
         }
-        imgli.button.onclick = (e) => {
-            // todo
+        imgli.button.onclick = (e) => {           
+            if (selectedTile == t) { selectedTile = null; }
+            let index = myTileset._isoTiles.indexOf(t);
+            myTileset._isoTiles.splice(index, 1);
+            listTiles();
+            drawSelectedTileToCanvas();
+        }
+        if (t == selectedTile) {
+            imgli.li.style.borderColor = 'red';
         }
         tilesUL.appendChild(imgli.li);
     }
