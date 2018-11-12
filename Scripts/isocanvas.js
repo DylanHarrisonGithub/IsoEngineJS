@@ -272,7 +272,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                 map.push([]);
                 for (var x = 0; x < width; x++) {
                     map[y].push([]);
-                    height = Math.floor(Math.random() * maxHeight);
+                    height = 1 + Math.floor(Math.random() * maxHeight);
                     for (var h = 0; h < height; h++) {
                         map[y][x].push(Math.floor(Math.random() * this.tiles.length));
                         if (this.tiles[map[y][x][h]].properties.canStack == false) {

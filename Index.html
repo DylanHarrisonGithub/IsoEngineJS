@@ -12,25 +12,11 @@
                     'scripts/isocanvas',
                     'scripts/isotileset'
                 ], function(isoTileNameSpace, isoCanvasNameSpace, isoTileSetNameSpace) {
-
-                    var images = [
-                        'Tiles/grass1.png',
-                        'Tiles/grass2.png',
-                        'Tiles/grass3.png',
-                        'Tiles/water1.png',  
-                        'Tiles/dirt1.png'
-                    ];
                     var isoCanvas = new isoCanvasNameSpace.IsoCanvas(document.getElementById('isoCanvasDiv'));
-                    
-                    isoTileNameSpace.IsoTile.loadTileset(images, function(isoTileset) {
-
-                        isoCanvas.tiles = isoTileset;
-                        for (isotile of isoTileset) {
-                            isotile.properties.canStack = false;
-                        }
-                        isoTileset[isoTileset.length-1].properties.canStack = true;
-
-                        isoCanvas.generateRandomMap(100, 100, 10);
+                    var tileSet = new isoTileSetNameSpace.IsoTileSet();
+                    tileSet.loadFromServer('tiles/tileset.json', () => {
+                        isoCanvas.tiles = tileSet._isoTiles;
+                        isoCanvas.generateRandomMap(100, 100, 2);
                         isoCanvas.paint();
 
                         window.addEventListener('resize', function(ev) {
@@ -46,7 +32,6 @@
                         });
                     });               
                 });
-
             }       
         </script>
     </head>

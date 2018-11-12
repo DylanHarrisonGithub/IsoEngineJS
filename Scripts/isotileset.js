@@ -115,6 +115,37 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                 document.body.removeChild(inputElement);
             }, 0);
         };
+        IsoTileSet.prototype.loadFromServer = function (filename, onload) {
+            var _this = this;
+            fetch(filename).then(function (res) { return res.json(); }).then(function (file) {
+                _this.properties = file.properties;
+                _this._images = [];
+                var numImages = file.images.length;
+                var loadedCounter = 0;
+                for (var _i = 0, _a = file.images; _i < _a.length; _i++) {
+                    var fileImg = _a[_i];
+                    var newImage = new Image();
+                    _this._images.push(newImage);
+                    newImage.onload = (function (event) {
+                        loadedCounter++;
+                        if (loadedCounter == numImages) {
+                            _this._isoTiles = [];
+                            for (var _i = 0, _a = file.tiles; _i < _a.length; _i++) {
+                                var tile = _a[_i];
+                                _this._isoTiles.push(new isoTile.IsoTile(_this._images[tile.index], tile.properties));
+                            }
+                            onload();
+                        }
+                    });
+                    newImage.onerror = function () {
+                        console.log('image did not load');
+                        numImages--;
+                    };
+                    newImage.src = fileImg;
+                }
+                onload();
+            });
+        };
         return IsoTileSet;
     }());
     exports.IsoTileSet = IsoTileSet;

@@ -38,7 +38,7 @@ export class IsoTileSet {
         setTimeout(function() {
             document.body.removeChild(inputElement);  
         }, 0);        
-    } 
+    }
 
     dumbSave() {
 
@@ -120,6 +120,38 @@ export class IsoTileSet {
         setTimeout(function() {
             document.body.removeChild(inputElement);  
         }, 0);        
+    }
+
+    loadFromServer(filename: string, onload: Function) {
+        fetch(filename).then(res => res.json()).then(file => {
+            this.properties = file.properties;
+            this._images = [];                    
+            let numImages = file.images.length;
+            let loadedCounter = 0;
+            for (let fileImg of file.images) {
+                let newImage = new Image();
+                this._images.push(newImage);
+                newImage.onload = ((event) => {
+                    loadedCounter++;
+                    if (loadedCounter == numImages) {
+                        this._isoTiles = [];
+                        for (let tile of file.tiles) {
+                            this._isoTiles.push(new isoTile.IsoTile(
+                                this._images[tile.index],
+                                tile.properties
+                            ));
+                        }
+                        onload();
+                    }
+                });
+                newImage.onerror = function() {
+                    console.log('image did not load');
+                    numImages--;
+                }
+                newImage.src = fileImg;
+            }
+            onload();
+        });
     }
 
 }
