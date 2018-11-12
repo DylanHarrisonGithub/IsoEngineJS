@@ -13,14 +13,14 @@ function importImage() {requirejs(['scripts/isotile','scripts/isotileset'], func
         let newImageLI = createImageLI(newImage);
         newImageLI.canvas.onclick = (e) => {            
             selectedImage = newImage;
-            let c = document.getElementById('imageCanvas');
-            c.width = newImage.width;
-            c.height = newImage.height;
-            let ctx = c.getContext('2d');
-            ctx.drawImage(newImage, 0, 0);
             if (selectedTile) {
-                //todo
+                if (!selectedTile.image) {
+                    selectedTile.properties.subImageWidth = newImage.width;
+                    selectedTile.properties.subImageHeight = newImage.height;
+                    setPropertiesList(document.getElementById('tilePropertiesUL'), selectedTile, 'tile');
+                }
                 selectedTile.image = newImage;
+                drawSelectedTileToCanvas();
                 listTiles();
             }            
         }
@@ -43,6 +43,7 @@ function newTile() {requirejs(['scripts/isotile','scripts/isotileset'], function
         }
         newTileLI.li.style.borderColor = 'red';
         setPropertiesList(document.getElementById('tilePropertiesUL'), newTile, 'tile');
+        drawSelectedTileToCanvas();
     }
     newTileLI.button.onclick = (e) => {
         // todo
@@ -52,6 +53,28 @@ function newTile() {requirejs(['scripts/isotile','scripts/isotileset'], function
 });}
 
 function listImages() {requirejs(['scripts/isotile','scripts/isotileset'], function(isoTileNameSpace, isoTileSetNameSpace) {
+    let imagesUL = document.getElementById('imagesUL');
+    imagesUL.innerHTML = '';
+    for (let i of myTileset._images) {
+        let imgli = createImageLI(i);
+        imgli.canvas.onclick = (e) => {            
+            selectedImage = i;
+            if (selectedTile) {
+                if (!selectedTile.image) {
+                    selectedTile.properties.subImageWidth = i.width;
+                    selectedTile.properties.subImageHeight = i.height;
+                    setPropertiesList(document.getElementById('tilePropertiesUL'), selectedTile, 'tile');
+                }
+                selectedTile.image = i;
+                drawSelectedTileToCanvas();
+                listTiles();
+            }            
+        }
+        imgli.button.onclick = (e) => {
+            //todo
+        }
+        imagesUL.appendChild(imgli.li); 
+    }
 });}
 
 function listTiles() {requirejs(['scripts/isotile','scripts/isotileset'], function(isoTileNameSpace, isoTileSetNameSpace) {
@@ -62,6 +85,7 @@ function listTiles() {requirejs(['scripts/isotile','scripts/isotileset'], functi
         imgli.canvas.onclick = (e) => {
             selectedTile = t;
             setPropertiesList(document.getElementById('tilePropertiesUL'), t, 'tile');
+            drawSelectedTileToCanvas();
         }
         imgli.button.onclick = (e) => {
             // todo
@@ -70,21 +94,18 @@ function listTiles() {requirejs(['scripts/isotile','scripts/isotileset'], functi
     }
 });}
 
-function loadSet() {
-    // import IsoTile and IsoCanvas modules via requirejs
-    requirejs([
-        'scripts/isotile',
-        'scripts/isotileset'
-    ], function(isoTileNameSpace, isoTileSetNameSpace) {
-        myTileset.dumbLoad(function() {                        
-            let c = document.getElementById('imageCanvas');
-            c.width = myTileset._images[myTileset._images.length-1].width;
-            c.height = myTileset._images[myTileset._images.length-1].height;
-            let ctx = c.getContext('2d');
-            ctx.drawImage(myTileset._images[myTileset._images.length-1], 0, 0);
-        });
+function loadSet() { requirejs(['scripts/isotile','scripts/isotileset'], function(isoTileNameSpace, isoTileSetNameSpace) {
+    myTileset.dumbLoad(function() {
+        
+        console.log(myTileset); 
+        selectedTile = null;
+        document.getElementById('tilePropertiesUL').innerHTML = '';
+        setPropertiesList(document.getElementById('tilesetPropertyUL'), myTileset, 'set');
+        listImages();
+        listTiles();                      
     });
-}
+});}
+
 function saveSet() {
     requirejs([
         'scripts/isotile',
@@ -187,4 +208,26 @@ function createImageLI(img) {
     removeButton.classList.add('removeButton');
     imageLI.appendChild(removeButton);
     return {'li': imageLI, 'canvas': previewCan, 'button': removeButton};   
+}
+
+function drawSelectedTileToCanvas() {
+    if (selectedTile) {
+        if (selectedTile.image) {
+            let c = document.getElementById('imageCanvas');
+            c.width = selectedTile.image.width;
+            c.height = selectedTile.image.height;
+            let ctx = c.getContext('2d');
+            ctx.drawImage(selectedTile.image, 0, 0);
+            ctx.beginPath();
+            ctx.lineWidth = '1';
+            ctx.strokeStyle='red';
+            ctx.rect(
+                selectedTile.properties.subImageX,
+                selectedTile.properties.subImageY,
+                selectedTile.properties.subImageX + selectedTile.properties.subImageWidth,
+                selectedTile.properties.subImageY + selectedTile.properties.subImageHeight,
+            );
+            ctx.stroke();
+        }
+    }
 }

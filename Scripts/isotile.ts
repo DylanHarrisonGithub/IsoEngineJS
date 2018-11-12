@@ -12,8 +12,10 @@ export class IsoTile {
         'stackingHeight': 1.0,
         'isClipped': true,
         'isRamp': false,
-        'isSouthNorthRamp': false,
-        'isEastWestRamp': false,
+        'isSouthUpToNorthRamp': false,
+        'isEastUpToWestRamp': false,
+        'isNorthUpToSouthRamp': false,
+        'isWestUpToEastRamp': false,
         'isHidden': false, 
     }
 
@@ -28,38 +30,10 @@ export class IsoTile {
         }
 
         if (params) {
-            if ('canStack' in params) {
-                this.properties.canStack = params['canStack'];
-            }
-            if ('stackingHeight' in params) {
-                this.properties.stackingHeight = params['stackingHeight'];
-            }
-            if ('isClipped' in params) {
-                this.properties.isClipped = params['isClipped'];
-            }
-            if ('isRamp' in params) {
-                this.properties.isRamp = params['isRamp'];
-            }
-            if ('isSouthNorthRamp' in params) {
-                this.properties.isSouthNorthRamp = params['isSouthNorthRamp'];
-            }
-            if ('isEastWestRamp' in params) {
-                this.properties.isEastWestRamp = params['isEastWestRamp'];
-            }        
-            if ('isHidden' in params) {
-                this.properties.isHidden = params['isHidden'];
-            }
-            if ('subImageX' in params) {
-                this.properties.subImageX = params['subImageX'];
-            }            
-            if ('subImageY' in params) {
-                this.properties.subImageX = params['subImageY'];
-            }            
-            if ('subImageWidth' in params) {
-                this.properties.subImageX = params['subImageWidth'];
-            }            
-            if ('subImageHeight' in params) {
-                this.properties.subImageX = params['subImageHeight'];
+            for (let key in params) {
+                if (key in this.properties) {
+                    this.properties[key] = params[key];
+                }
             }
         }
     }
