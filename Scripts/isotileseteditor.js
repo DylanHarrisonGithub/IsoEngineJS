@@ -1,6 +1,7 @@
 var myTileset;
 var selectedImage = null;
 var selectedTile = null;
+var isAnimating = false;
 
 function init() { requirejs(['scripts/isotile','scripts/isotileset'], function(isoTileNameSpace, isoTileSetNameSpace) {
         myTileset = new isoTileSetNameSpace.IsoTileSet();
@@ -302,3 +303,36 @@ function drawSelectedTileToCanvas() {
         c.height = 0;
     }
 }
+
+function playAnimation() { requirejs(['scripts/isotile','scripts/isotileset'], function(isoTileNameSpace, isoTileSetNameSpace) {
+
+    if (myTileset.properties.isAnimation && myTileset.properties.fps > 0) {
+        if (isAnimating) {
+            isAnimating = false;
+            document.getElementById('animationButton').innerHTML = 'Animate';
+        } else {
+            isAnimating = true;
+            document.getElementById('animationButton').innerHTML = 'Stop';
+            let imageLIS = document.getElementById('tilesUL').childNodes;
+            let tileNum = 0;
+            let numTiles = imageLIS.length;
+            let timeoutFunction = function() {
+                setTimeout(() => {
+                    if (tileNum == numTiles) {
+                        if (!myTileset.properties.animationLoops) {
+                            isAnimating = false;
+                            document.getElementById('animationButton').innerHTML = 'Animate';
+                        }
+                        tileNum = 0;
+                    }
+                    imageLIS[tileNum].getElementsByTagName('canvas')[0].click();
+                    tileNum++;
+                    if (isAnimating && (myTileset.properties.fps > 0)) {
+                        timeoutFunction();
+                    }
+                }, 1000.0 / myTileset.properties.fps);
+            }
+            timeoutFunction();
+        }
+    }
+});}

@@ -7,7 +7,7 @@
         <script type="text/javascript" src="scripts/isotileseteditor.js"></script>
     </head>
     <body onload="init()">
-        <div id="mainDiv" class="w3-theme-d1"  style="height: 100%; width: 100%; border-radius: 0px;">
+        <div id="mainDiv" class="w3-theme-d1"  style="height: 100%; width: 100%; border-radius: 0px; position: fixed;">
             <div id="tilesetNameDiv" class="w3-theme-d5" style="height: 10%; width:100%; text-align: center;">
                 Tile Set Editor
             </div>
@@ -37,7 +37,7 @@
             <div style="height: 90%; width:20%; float:left; border-radius: 25px;">
                 <div class="w3-theme-d4" style="height: 5%; width:100%; text-align: center;">
                     Tiles                    
-                    <button class="menuButton" onclick="animate()">Animate</button>
+                    <button id="animationButton" class="menuButton" onclick="playAnimation()">Animate</button>
                     <button class="menuButton" onclick="newTile()">New</button>
                 </div>               
                 <div id="imagesPanelDiv" class="w3-theme-d3" style="height:45%; width:100%; overflow: auto; text-align: center;">
