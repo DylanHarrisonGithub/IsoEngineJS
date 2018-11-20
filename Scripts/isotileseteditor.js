@@ -2,10 +2,63 @@ var myTileset;
 var selectedImage = null;
 var selectedTile = null;
 var isAnimating = false;
+var cursor = {
+    useCursor: false,
+    width: 128,
+    height: 128,
+    x: 0,
+    y: 0
+}
 
 function init() { requirejs(['scripts/isotile','scripts/isotileset'], function(isoTileNameSpace, isoTileSetNameSpace) {
         myTileset = new isoTileSetNameSpace.IsoTileSet();
         setPropertiesList(document.getElementById('tilesetPropertyUL'), myTileset, 'set');
+        document.getElementById('useCursorCheckBox').addEventListener('click', ()=> {
+            cursor.useCursor = !cursor.useCursor;
+            if (cursor.useCursor) {
+                document.getElementById('cursorWidthInput').removeAttribute('disabled');
+                document.getElementById('cursorHeightInput').removeAttribute('disabled');
+            } else {
+                document.getElementById('cursorWidthInput').setAttribute('disabled', 'disabled');
+                document.getElementById('cursorHeightInput').setAttribute('disabled', 'disabled');
+            }
+        });
+        document.getElementById('cursorWidthInput').addEventListener('change', (e)=> {
+            cursor.width = e.target.value;
+        });
+        
+        document.getElementById('cursorHeightInput').addEventListener('change', (e)=> {
+            cursor.height = e.target.value;
+        });
+        document.getElementById('useCursorCheckBox').checked = false;
+        document.getElementById('cursorWidthInput').value = cursor.width;        
+        document.getElementById('cursorHeightInput').value = cursor.height;
+        document.getElementById('imageCanvas').addEventListener('mousemove', (e) => {
+            if (cursor.useCursor) {
+                var canvasRect = e.target.getBoundingClientRect();
+                let mouseCanvas = {
+                    "x": Math.floor((e.clientX-canvasRect.left)/cursor.width), 
+                    "y": Math.floor((e.clientY-canvasRect.top)/cursor.height)
+                };
+                if (mouseCanvas.x != cursor.x || mouseCanvas.y != cursor.y) {
+                    cursor.x = mouseCanvas.x;
+                    cursor.y = mouseCanvas.y;
+                    drawSelectedTileToCanvas();
+                }
+
+            }
+        });
+        document.getElementById('imageCanvas').addEventListener('click', (e) => {
+            if (cursor.useCursor) {
+                selectedTile.properties.subImageX = cursor.x*cursor.width;
+                selectedTile.properties.subImageY = cursor.y*cursor.height;
+                selectedTile.properties.subImageWidth = cursor.width;
+                selectedTile.properties.subImageHeight = cursor.height;
+                drawSelectedTileToCanvas();
+                listTiles();
+                setPropertiesList(document.getElementById('tilePropertiesUL'), selectedTile, 'tile');
+            }
+        });
 });}
 
 function importImage() {requirejs(['scripts/isotile','scripts/isotileset'], function(isoTileNameSpace, isoTileSetNameSpace) {
@@ -290,6 +343,17 @@ function drawSelectedTileToCanvas() {
                 selectedTile.properties.subImageHeight,
             );
             ctx.stroke();
+            if (cursor.useCursor) {
+                ctx.beginPath();
+                ctx.strokeStyle='green';
+                ctx.rect(
+                    cursor.x*cursor.width,
+                    cursor.y*cursor.height,
+                    cursor.width,
+                    cursor.height
+                );
+                ctx.stroke();
+            }
         } else {           
             // hide canvas
             let c = document.getElementById('imageCanvas');
