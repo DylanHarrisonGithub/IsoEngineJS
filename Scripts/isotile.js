@@ -6,6 +6,8 @@ define(["require", "exports"], function (require, exports) {
     var IsoTile = /** @class */ (function () {
         function IsoTile(img, params) {
             this.properties = {
+                'cellWidth': 1,
+                'cellHeight': 1,
                 'subImageX': 0,
                 'subImageY': 0,
                 'subImageWidth': 0,

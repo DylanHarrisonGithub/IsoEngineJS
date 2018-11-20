@@ -82,13 +82,12 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
         };
         IsoCanvas.prototype.drawIsoTile = function (isoCoord, tile, ctx) {
             var img = tile.image;
-            var c = this.isoToCanvasCoords({ 'x': isoCoord.x - .5, 'y': isoCoord.y + .5 });
-            if (img.height == img.width) {
-                ctx.drawImage(img, tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight, c.x, c.y - this._canvasTileSize.y, this._canvasTileSize.x, this._canvasTileSize.x);
-            }
-            else {
-                ctx.drawImage(img, c.x, c.y, this._canvasTileSize.x, this._canvasTileSize.y);
-            }
+            var hwRatio = tile.properties.subImageHeight / tile.properties.subImageWidth;
+            var c = this.isoToCanvasCoords({
+                'x': isoCoord.x - 1.5 - 2 * (hwRatio - 1.0),
+                'y': isoCoord.y - 0.5 - 2 * (hwRatio - 1.0)
+            });
+            ctx.drawImage(img, tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight, c.x, c.y, this._canvasTileSize.x, hwRatio * this._canvasTileSize.x);
         };
         IsoCanvas.prototype.drawIsoTilesWithinCanvasFrame = function (ctx) {
             // get isometric coordinates of canvas boundary corners

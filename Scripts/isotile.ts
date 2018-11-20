@@ -4,6 +4,8 @@ export class IsoTile {
 
     public image: HTMLImageElement;
     public properties = {
+        'cellWidth': 1,
+        'cellHeight': 1,
         'subImageX': 0,
         'subImageY': 0,
         'subImageWidth': 0,

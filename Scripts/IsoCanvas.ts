@@ -103,15 +103,17 @@ export class IsoCanvas {
     drawIsoTile(isoCoord:  {'x': number, 'y': number}, tile: isoTile.IsoTile, ctx: CanvasRenderingContext2D) {
 
         let img = tile.image;
-        let c = this.isoToCanvasCoords({'x': isoCoord.x -.5, 'y': isoCoord.y +.5});
+        let hwRatio =  tile.properties.subImageHeight/ tile.properties.subImageWidth;
+        let c = this.isoToCanvasCoords({
+            'x': isoCoord.x - 1.5 - 2*(hwRatio - 1.0), 
+            'y': isoCoord.y - 0.5 - 2*(hwRatio - 1.0)
+        });
 
-        if (img.height == img.width) {
-            ctx.drawImage(img,
-                tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight,
-                c.x, c.y - this._canvasTileSize.y, this._canvasTileSize.x, this._canvasTileSize.x);
-        } else {
-            ctx.drawImage(img, c.x, c.y, this._canvasTileSize.x, this._canvasTileSize.y);
-        }
+        ctx.drawImage(
+            img,
+            tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight,
+            c.x, c.y, this._canvasTileSize.x, hwRatio*this._canvasTileSize.x
+        );
     }
 
     drawIsoTilesWithinCanvasFrame(ctx: CanvasRenderingContext2D) {
