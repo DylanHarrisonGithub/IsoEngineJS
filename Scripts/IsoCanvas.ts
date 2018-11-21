@@ -103,16 +103,25 @@ export class IsoCanvas {
     drawIsoTile(isoCoord:  {'x': number, 'y': number}, tile: isoTile.IsoTile, ctx: CanvasRenderingContext2D) {
 
         let img = tile.image;
-        let hwRatio =  tile.properties.subImageHeight/ tile.properties.subImageWidth;
+        let hwRatio =  tile.properties.subImageHeight / tile.properties.subImageWidth;
         let c = this.isoToCanvasCoords({
-            'x': isoCoord.x - 1.5 - 2*(hwRatio - 1.0), 
-            'y': isoCoord.y - 0.5 - 2*(hwRatio - 1.0)
+            //'x': isoCoord.x -1.5, 
+            //'y': isoCoord.y -0.5
+            
+            'x': isoCoord.x - (tile.properties.cellWidth - 1) - 1.5,
+            'y': isoCoord.y - 0.5
+        });
+        let cY = this.isoToCanvasCoords({
+            'x': isoCoord.x - (tile.properties.cellWidth + tile.properties.stackingHeight - 2) - 1.5,
+            'y': isoCoord.y - (tile.properties.cellHeight + tile.properties.stackingHeight - 2) - 0.5
         });
 
         ctx.drawImage(
             img,
             tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight,
-            c.x, c.y, this._canvasTileSize.x, hwRatio*this._canvasTileSize.x
+            c.x, cY.y, 
+            (0.5*tile.properties.cellWidth + 0.5*tile.properties.cellHeight)*this._canvasTileSize.x,
+            (0.25*tile.properties.cellWidth + 0.25*tile.properties.cellHeight + 0.5*tile.properties.stackingHeight)*this._canvasTileSize.x
         );
     }
 

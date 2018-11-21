@@ -14,7 +14,7 @@
                 ], function(isoTileNameSpace, isoCanvasNameSpace, isoTileSetNameSpace) {
                     var isoCanvas = new isoCanvasNameSpace.IsoCanvas(document.getElementById('isoCanvasDiv'));
                     var tileSet = new isoTileSetNameSpace.IsoTileSet();
-                    tileSet.loadFromServer('tiles/tileset2.json', () => {
+                    tileSet.loadFromServer('tiles/cellset.json', () => {
                         isoCanvas.tiles = tileSet._isoTiles;
                         isoCanvas.generateRandomMap(100, 100, 1);
                         isoCanvas.paint();
