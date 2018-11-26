@@ -127,12 +127,15 @@ export class IsoTileSet {
             this.properties = file.properties;
             this._images = [];                    
             let numImages = file.images.length;
+            //console.log('numImages: ', numImages);
             let loadedCounter = 0;
             for (let fileImg of file.images) {
                 let newImage = new Image();
                 this._images.push(newImage);
                 newImage.onload = ((event) => {
+                    newImage.onload = null;
                     loadedCounter++;
+                    //console.log('loading progress: ', loadedCounter);
                     if (loadedCounter == numImages) {
                         this._isoTiles = [];
                         for (let tile of file.tiles) {
@@ -141,11 +144,12 @@ export class IsoTileSet {
                                 tile.properties
                             ));
                         }
+                        //console.log('tileset loading complete');
                         onload();
                     }
                 });
-                newImage.onerror = function() {
-                    console.log('image did not load');
+                newImage.onerror = function(e) {
+                    console.log('image did not load', e);
                     numImages--;
                 }
                 newImage.src = fileImg;

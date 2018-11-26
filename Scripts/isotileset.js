@@ -121,27 +121,34 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                 _this.properties = file.properties;
                 _this._images = [];
                 var numImages = file.images.length;
+                //console.log('numImages: ', numImages);
                 var loadedCounter = 0;
-                for (var _i = 0, _a = file.images; _i < _a.length; _i++) {
-                    var fileImg = _a[_i];
+                var _loop_1 = function (fileImg) {
                     var newImage = new Image();
                     _this._images.push(newImage);
                     newImage.onload = (function (event) {
+                        newImage.onload = null;
                         loadedCounter++;
+                        //console.log('loading progress: ', loadedCounter);
                         if (loadedCounter == numImages) {
                             _this._isoTiles = [];
                             for (var _i = 0, _a = file.tiles; _i < _a.length; _i++) {
                                 var tile = _a[_i];
                                 _this._isoTiles.push(new isoTile.IsoTile(_this._images[tile.index], tile.properties));
                             }
+                            //console.log('tileset loading complete');
                             onload();
                         }
                     });
-                    newImage.onerror = function () {
-                        console.log('image did not load');
+                    newImage.onerror = function (e) {
+                        console.log('image did not load', e);
                         numImages--;
                     };
                     newImage.src = fileImg;
+                };
+                for (var _i = 0, _a = file.images; _i < _a.length; _i++) {
+                    var fileImg = _a[_i];
+                    _loop_1(fileImg);
                 }
                 onload();
             });

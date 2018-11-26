@@ -6,9 +6,9 @@ export class IsoCanvas {
     private _div: HTMLDivElement;
     private _canvas: HTMLCanvasElement;
     private _location = {'x': 0, 'y': 0};
-    private _tileSize = {'x': 64, 'y': 32};
-    private _doubleTileSizeInverse = {'x': 1.0 /(2*64), 'y': 1.0 /(2*32)};   
-    private _canvasTileSize = {'x': 64, 'y': 32};
+    private _cellSize = {'x': 64, 'y': 32}; // = 1/2 cell (width, height)
+    private _doubleCellSizeInverse = {'x': 1.0 /(2*this._cellSize.x), 'y': 1.0 /(2*this._cellSize.y)};   
+    private _canvasTileSize = {'x': this._cellSize.x, 'y': this._cellSize.y};
     private _zoom = 1.0;
     private _zoomInverse = 1.0;
     private _halfResolution = {'x': 0, 'y': 0};
@@ -16,11 +16,13 @@ export class IsoCanvas {
     private _mouseCartesian = {'x': 0, 'y': 0};
     private _mouseIso = {'x': 0, 'y': 0};
     private _mouseCell = {'x': 0, 'y': 0};
+    private _isoRotation = 0;
     
     public axesColor = '#000000';
     public gridColor = '#A0A0C0';
     public backgroundColor = '#ffffff';
     public map = [];
+    private _heightMap = [];
     public tiles: isoTile.IsoTile[] = [];
     public showAxes = true;
     public showGrid = true;
@@ -42,6 +44,10 @@ export class IsoCanvas {
         this._canvasTileSize.x = size2.x - size1.x;
         this._canvasTileSize.y = size4.y - size3.y;
 
+        // dummy invisible tiles for filler spaces
+        this.tiles.push(new isoTile.IsoTile(null, {isHidden: true, canStack: false}));
+        this.tiles.push(new isoTile.IsoTile(null, {isHidden: true}));
+
         this._div.addEventListener('mousemove', (ev: UIEvent) => {this.defaultMouseMoveListener(ev)});
 
         window.addEventListener('resize', (ev: UIEvent) => {
@@ -55,17 +61,86 @@ export class IsoCanvas {
 
     // Transformations
     isoToCartesianCoords(isoCoord: {'x': number, 'y': number}) {
-        return {
-            'x': this._tileSize.x*(isoCoord.x - isoCoord.y),
-            'y': -this._tileSize.y*(isoCoord.x + isoCoord.y)
-        };
+        
+        switch (this._isoRotation) {
+            case 0: {
+                // r=4n+0
+                // [ cx, -cx][x]
+                // [-cy, -cy][y]             
+                return {
+                    'x': this._cellSize.x*(isoCoord.x - isoCoord.y),
+                    'y': -this._cellSize.y*(isoCoord.x + isoCoord.y)
+                }
+            }
+            case 1: {
+                // r=4n+1
+                // [ cx,  cx][x]
+                // [ cy, -cy][y]
+                return {
+                    'x': this._cellSize.x*(isoCoord.x + isoCoord.y),
+                    'y': this._cellSize.y*(isoCoord.x - isoCoord.y)
+                }
+            }
+            case 2: {
+                // r=4n+2
+                // [-cx,  cx][x]
+                // [ cy,  cy][y]             
+                return {
+                    'x': this._cellSize.x*(-isoCoord.x + isoCoord.y),
+                    'y': this._cellSize.y*(isoCoord.x + isoCoord.y)
+                }
+            }
+            default: {
+                // r=4n+3
+                // [-cx, -cx][x]
+                // [-cy,  cy][y]
+                return {
+                    'x': -this._cellSize.x*(isoCoord.x + isoCoord.y),
+                    'y': this._cellSize.y*(-isoCoord.x + isoCoord.y)
+                }
+            }            
+        }
     }
 
     cartesianToIsoCoords(cartesianCoord:  {'x': number, 'y': number}) {
-        return {
-            'x': cartesianCoord.x*this._doubleTileSizeInverse.x - cartesianCoord.y*this._doubleTileSizeInverse.y,
-            'y': -(cartesianCoord.x*this._doubleTileSizeInverse.x + cartesianCoord.y*this._doubleTileSizeInverse.y)
-        };
+        switch (this._isoRotation) {
+            case 0: {               
+                // r=4n+0
+                // [ 2icx, -2icy][x]
+                // [-2icx, -2icy][y]                    
+                return {
+                    'x': this._doubleCellSizeInverse.x*cartesianCoord.x - this._doubleCellSizeInverse.y*cartesianCoord.y,
+                    'y': -(this._doubleCellSizeInverse.x*cartesianCoord.x + this._doubleCellSizeInverse.y*cartesianCoord.y)
+                };
+            }
+            case 1: {               
+                // r=4n+1
+                // [ 2icx, 2icy][x]
+                // [ 2icx,-2icy][y]
+                return {
+                    'x': this._doubleCellSizeInverse.x*cartesianCoord.x + this._doubleCellSizeInverse.y*cartesianCoord.y,
+                    'y': this._doubleCellSizeInverse.x*cartesianCoord.x - this._doubleCellSizeInverse.y*cartesianCoord.y
+                };
+            }
+            case 2: {               
+                // r=4n+2
+                // [-(2icx)  (2icy)][x]
+                // [ (2icx)  (2icy)][y]
+                return {
+                    'x': -this._doubleCellSizeInverse.x*cartesianCoord.x + this._doubleCellSizeInverse.y*cartesianCoord.y,
+                    'y': this._doubleCellSizeInverse.x*cartesianCoord.x + this._doubleCellSizeInverse.y*cartesianCoord.y
+                };
+            }
+            default: {               
+                // r=4n+3
+                // [-2icx, -2icy][x]
+                // [-2icx,  2icy][y]
+                return {
+                    'x': -this._doubleCellSizeInverse.x*cartesianCoord.x - this._doubleCellSizeInverse.y*cartesianCoord.y,
+                    'y': -this._doubleCellSizeInverse.x*cartesianCoord.x + this._doubleCellSizeInverse.y*cartesianCoord.y
+                };
+            }            
+        }
     }
 
     cartesianToCanvasCoords(cartesianCoord: {'x': number, 'y': number}) {
@@ -102,27 +177,28 @@ export class IsoCanvas {
 
     drawIsoTile(isoCoord:  {'x': number, 'y': number}, tile: isoTile.IsoTile, ctx: CanvasRenderingContext2D) {
 
-        let img = tile.image;
-        let hwRatio =  tile.properties.subImageHeight / tile.properties.subImageWidth;
-        let c = this.isoToCanvasCoords({
-            //'x': isoCoord.x -1.5, 
-            //'y': isoCoord.y -0.5
-            
-            'x': isoCoord.x - (tile.properties.cellWidth - 1) - 1.5,
-            'y': isoCoord.y - 0.5
-        });
-        let cY = this.isoToCanvasCoords({
-            'x': isoCoord.x - (tile.properties.cellWidth + tile.properties.stackingHeight - 2) - 1.5,
-            'y': isoCoord.y - (tile.properties.cellHeight + tile.properties.stackingHeight - 2) - 0.5
-        });
+        if (tile && tile.image && !tile.properties.isHidden) {
 
-        ctx.drawImage(
-            img,
-            tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight,
-            c.x, cY.y, 
-            (0.5*tile.properties.cellWidth + 0.5*tile.properties.cellHeight)*this._canvasTileSize.x,
-            (0.25*tile.properties.cellWidth + 0.25*tile.properties.cellHeight + 0.5*tile.properties.stackingHeight)*this._canvasTileSize.x
-        );
+            // todo: optimize with algebra
+            // x coord of leftmost lowest tile
+            let cX = this.isoToCanvasCoords({
+                'x': isoCoord.x - (tile.properties.cellWidth - 1) - 1.5,
+                'y': isoCoord.y - 0.5
+            });
+            // y coord of uppermost tile
+            let cY = this.isoToCanvasCoords({
+                'x': isoCoord.x - (tile.properties.cellWidth + tile.properties.stackingHeight - 2) - 1.5,
+                'y': isoCoord.y - (tile.properties.cellHeight + tile.properties.stackingHeight - 2) - 0.5
+            });
+    
+            ctx.drawImage(
+                tile.image,
+                tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight,
+                cX.x, cY.y, 
+                (0.5*tile.properties.cellWidth + 0.5*tile.properties.cellHeight)*this._canvasTileSize.x,
+                (0.25*tile.properties.cellWidth + 0.25*tile.properties.cellHeight + 0.5*tile.properties.stackingHeight)*this._canvasTileSize.x
+            );
+        }
     }
 
     drawIsoTilesWithinCanvasFrame(ctx: CanvasRenderingContext2D) {
@@ -302,9 +378,14 @@ export class IsoCanvas {
 
         ctx.strokeStyle = this.gridColor;
         var uv, u, v;
+        let minX = Math.min(a.x, b.x, c.x, d.x);
+        let maxX = Math.max(a.x, b.x, c.x, d.x);
+        
+        let minY = Math.min(a.y, b.y, c.y, d.y);
+        let maxY = Math.max(a.y, b.y, c.y, d.y);
 
         // plot x gridlines
-        for (var x = a.x; x < c.x; x++) {
+        for (var x = minX; x < maxX; x++) {
 
             uv = this._cartesianGetLineSegmentInCanvasBounds(
                 this.isoToCartesianCoords({'x': x, 'y': 0}),
@@ -322,7 +403,7 @@ export class IsoCanvas {
         }
 
         // plot y gridlines
-        for (var y = b.y; y < d.y; y++) {
+        for (var y = minY; y < maxY; y++) {
 
             uv = this._cartesianGetLineSegmentInCanvasBounds(
                 this.isoToCartesianCoords({'x': 0, 'y': y}),
@@ -469,6 +550,7 @@ export class IsoCanvas {
             this._mouseCell.y = Math.floor(this._mouseIso.y);
             this.paint();
         }
+        console.log(this._mouseIso);
     }
     
     defaultMouseWheelListener(event) {
