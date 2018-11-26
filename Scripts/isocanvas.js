@@ -15,7 +15,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             this._mouseCartesian = { 'x': 0, 'y': 0 };
             this._mouseIso = { 'x': 0, 'y': 0 };
             this._mouseCell = { 'x': 0, 'y': 0 };
-            this._isoRotation = 3;
+            this._isoRotation = 1;
             this.axesColor = '#000000';
             this.gridColor = '#A0A0C0';
             this.backgroundColor = '#ffffff';
@@ -24,6 +24,48 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             this.tiles = [];
             this.showAxes = true;
             this.showGrid = true;
+            this._relativeIsoRotationDirections = [
+                [
+                    { 'x': 1, 'y': -1 },
+                    { 'x': 0, 'y': -1 },
+                    { 'x': -1, 'y': -1 },
+                    { 'x': -1, 'y': 0 },
+                    { 'x': -1, 'y': 1 },
+                    { 'x': 0, 'y': 1 },
+                    { 'x': 1, 'y': 1 },
+                    { 'x': 1, 'y': 0 } // 315deg
+                ],
+                [
+                    { 'x': 1, 'y': 1 },
+                    { 'x': 1, 'y': 0 },
+                    { 'x': 1, 'y': -1 },
+                    { 'x': 0, 'y': -1 },
+                    { 'x': -1, 'y': -1 },
+                    { 'x': -1, 'y': 0 },
+                    { 'x': -1, 'y': 1 },
+                    { 'x': 0, 'y': 1 } // 315deg
+                ],
+                [
+                    { 'x': -1, 'y': 1 },
+                    { 'x': 0, 'y': 1 },
+                    { 'x': 1, 'y': 1 },
+                    { 'x': 1, 'y': 0 },
+                    { 'x': 1, 'y': -1 },
+                    { 'x': 0, 'y': -1 },
+                    { 'x': -1, 'y': -1 },
+                    { 'x': -1, 'y': 0 } // 315deg            
+                ],
+                [
+                    { 'x': -1, 'y': -1 },
+                    { 'x': -1, 'y': 0 },
+                    { 'x': -1, 'y': 1 },
+                    { 'x': 0, 'y': 1 },
+                    { 'x': 1, 'y': 1 },
+                    { 'x': 1, 'y': 0 },
+                    { 'x': 1, 'y': -1 },
+                    { 'x': 0, 'y': -1 } // 315deg 
+                ]
+            ];
             this._div = delagateDiv;
             this._canvas = document.createElement('canvas');
             this._div.append(this._canvas);
@@ -65,8 +107,6 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                     // [ cx,  cx][x]
                     // [ cy, -cy][y]
                     return {
-                        //'x': -this._cellSize.x*(isoCoord.x + isoCoord.y),
-                        //'y': this._cellSize.y*(-isoCoord.x + isoCoord.y)
                         'x': this._cellSize.x * (isoCoord.x + isoCoord.y),
                         'y': this._cellSize.y * (isoCoord.x - isoCoord.y)
                     };
@@ -155,6 +195,32 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             ctx.fillStyle = this.backgroundColor;
             ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
         };
+        IsoCanvas.prototype.highlightCell = function (isoCoord, ctx) {
+            var a = this.isoToCanvasCoords({
+                'x': isoCoord.x,
+                'y': isoCoord.y
+            });
+            var b = this.isoToCanvasCoords({
+                'x': isoCoord.x + 1,
+                'y': isoCoord.y
+            });
+            var c = this.isoToCanvasCoords({
+                'x': isoCoord.x + 1,
+                'y': isoCoord.y + 1
+            });
+            var d = this.isoToCanvasCoords({
+                'x': isoCoord.x,
+                'y': isoCoord.y + 1
+            });
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.lineTo(c.x, c.y);
+            ctx.lineTo(d.x, d.y);
+            ctx.closePath();
+            ctx.strokeStyle = '#ff0000';
+            ctx.stroke();
+        };
         IsoCanvas.prototype.drawIsoTile = function (isoCoord, tile, ctx) {
             if (tile && tile.image && !tile.properties.isHidden) {
                 // todo: optimize with algebra
@@ -181,7 +247,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             var c = this.canvasToIsoCoords({ "x": this._canvas.width, "y": this._canvas.height });
             var d = this.canvasToIsoCoords({ 'x': 0, 'y': this._canvas.height });
             // adjust so that corners form a perfect rectangle
-            a.x = Math.floor(a.x) - 1; // slightly larger that screen
+            a.x = Math.floor(a.x);
             a.y = Math.floor(a.y);
             b.x = Math.floor(b.x);
             b.y = a.y - b.x + a.x;
@@ -189,18 +255,35 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             c.x = c.y - b.y + b.x;
             d.x = ((c.x + c.y) + (a.x - a.y)) / 2; // ?prove always divisible?
             d.y = ((c.x + c.y) - (a.x - a.y)) / 2;
-            // begin curser in upper left corner of rectangle
-            var u = { 'x': a.x, 'y': a.y };
-            var height = 2 * (d.y - a.y) + 1; // breaks?
-            // work downward from top row
-            for (var diagonal = 0; diagonal < height; diagonal++) {
-                while ((u.x <= b.x) && (u.y >= b.y)) {
+            // begin cursor in upper left corner of rectangle
+            var u = {
+                'x': a.x,
+                'y': a.y
+            };
+            var rowStart = {
+                'x': a.x,
+                'y': a.y
+            };
+            var rowEnd = {
+                'x': b.x + this._relativeIsoRotationDirections[this._isoRotation][0].x,
+                'y': b.y + this._relativeIsoRotationDirections[this._isoRotation][0].y
+            };
+            var terminator = {
+                'x': d.x + this._relativeIsoRotationDirections[this._isoRotation][5].x,
+                'y': d.y + this._relativeIsoRotationDirections[this._isoRotation][5].y
+            };
+            var rowCounter = 0;
+            while ((u.x != terminator.x) && (u.y != terminator.y)) {
+                while ((u.x != rowEnd.x) && (u.y != rowEnd.y)) {
                     if ((u.x > -1) && (u.x < this.map[0].length) && (u.y > -1) && (u.y < this.map.length)) {
                         // draw tiles from ground up
                         var stackingHeight = 0;
                         for (var level = 0; level < this.map[u.y][u.x].length; level++) {
                             // todo: detect if tile is visible or obscured to speed up drawing
-                            this.drawIsoTile({ 'x': u.x - stackingHeight, 'y': u.y - stackingHeight }, this.tiles[this.map[u.y][u.x][level]], ctx);
+                            this.drawIsoTile({
+                                'x': u.x + this._relativeIsoRotationDirections[this._isoRotation][2].x * stackingHeight,
+                                'y': u.y + this._relativeIsoRotationDirections[this._isoRotation][2].y * stackingHeight
+                            }, this.tiles[this.map[u.y][u.x][level]], ctx);
                             stackingHeight += this.tiles[this.map[u.y][u.x][level]].properties.stackingHeight;
                         }
                         // highlight mouseover tile
@@ -219,24 +302,29 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                             ctx.fill();
                         }
                     }
-                    // move cursor diagonal left
-                    u.x++;
-                    u.y--;
+                    // move cursor left
+                    u.x += this._relativeIsoRotationDirections[this._isoRotation][0].x;
+                    u.y += this._relativeIsoRotationDirections[this._isoRotation][0].y;
                 }
                 // proceed downward in zigzag fashion
                 // /  \
                 // \  /
                 // /  \
                 // ..
-                if (diagonal % 2 == 1) {
-                    b.y++;
-                    a.x++;
+                if (rowCounter % 2 == 1) {
+                    rowStart.x += this._relativeIsoRotationDirections[this._isoRotation][5].x;
+                    rowStart.y += this._relativeIsoRotationDirections[this._isoRotation][5].y;
+                    rowEnd.x += this._relativeIsoRotationDirections[this._isoRotation][7].x;
+                    rowEnd.y += this._relativeIsoRotationDirections[this._isoRotation][7].y;
                 }
                 else {
-                    b.x++;
-                    a.y++;
+                    rowStart.x += this._relativeIsoRotationDirections[this._isoRotation][7].x;
+                    rowStart.y += this._relativeIsoRotationDirections[this._isoRotation][7].y;
+                    rowEnd.x += this._relativeIsoRotationDirections[this._isoRotation][5].x;
+                    rowEnd.y += this._relativeIsoRotationDirections[this._isoRotation][5].y;
                 }
-                u = { 'x': a.x, 'y': a.y }; // set cursor to next diagonal row
+                rowCounter++;
+                u = { 'x': rowStart.x, 'y': rowStart.y }; // set cursor to next row
             }
         };
         IsoCanvas.prototype.drawCartesianAxes = function (ctx) {
@@ -348,6 +436,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                 this.drawIsoAxes(ctx);
             }
             this.drawIsoTilesWithinCanvasFrame(ctx);
+            this.highlightCell(this._mouseCell, ctx);
         };
         // map methods
         IsoCanvas.prototype.generateRandomMap = function (width, length, maxHeight) {
@@ -459,7 +548,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                 this._mouseCell.y = Math.floor(this._mouseIso.y);
                 this.paint();
             }
-            console.log(this._mouseIso);
+            console.log(this._mouseCell);
         };
         IsoCanvas.prototype.defaultMouseWheelListener = function (event) {
             if (event.deltaY < 0) {

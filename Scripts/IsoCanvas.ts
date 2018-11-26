@@ -16,7 +16,7 @@ export class IsoCanvas {
     private _mouseCartesian = {'x': 0, 'y': 0};
     private _mouseIso = {'x': 0, 'y': 0};
     private _mouseCell = {'x': 0, 'y': 0};
-    private _isoRotation = 0;
+    private _isoRotation = 1;
     
     public axesColor = '#000000';
     public gridColor = '#A0A0C0';
@@ -26,6 +26,49 @@ export class IsoCanvas {
     public tiles: isoTile.IsoTile[] = [];
     public showAxes = true;
     public showGrid = true;
+    
+    private _relativeIsoRotationDirections = [
+        [
+            {'x': 1, 'y': -1},      // 0deg
+            {'x': 0, 'y': -1},      // 45deg
+            {'x': -1, 'y': -1},     // 90deg
+            {'x': -1, 'y': 0},      // 135deg
+            {'x': -1, 'y': 1},      // 180deg
+            {'x': 0, 'y': 1},       // 225deg
+            {'x': 1, 'y': 1},       // 270deg
+            {'x': 1, 'y': 0}        // 315deg
+        ],
+        [
+            {'x': 1, 'y': 1},       // 0deg
+            {'x': 1, 'y': 0},       // 45deg
+            {'x': 1, 'y': -1},      // 90deg
+            {'x': 0, 'y': -1},      // 135deg
+            {'x': -1, 'y': -1},     // 180deg
+            {'x': -1, 'y': 0},      // 225deg
+            {'x': -1, 'y': 1},      // 270deg
+            {'x': 0, 'y': 1}        // 315deg
+        ],
+        [
+            {'x': -1, 'y': 1},      // 0deg
+            {'x': 0, 'y': 1},       // 45deg
+            {'x': 1, 'y': 1},       // 90deg
+            {'x': 1, 'y': 0},       // 135deg
+            {'x': 1, 'y': -1},      // 180deg
+            {'x': 0, 'y': -1},      // 225deg
+            {'x': -1, 'y': -1},     // 270deg
+            {'x': -1, 'y': 0}       // 315deg            
+        ],
+        [
+            {'x': -1, 'y': -1},     // 0deg
+            {'x': -1, 'y': 0},      // 45deg
+            {'x': -1, 'y': 1},      // 90deg
+            {'x': 0, 'y': 1},       // 135deg
+            {'x': 1, 'y': 1},       // 180deg
+            {'x': 1, 'y': 0},       // 225deg
+            {'x': 1, 'y': -1},      // 270deg
+            {'x': 0, 'y': -1}       // 315deg 
+        ]
+    ]
 
     constructor(delagateDiv: HTMLDivElement) {
 
@@ -175,6 +218,35 @@ export class IsoCanvas {
         ctx.fillRect(0,0,this._canvas.width,this._canvas.height);
     }
 
+    highlightCell(isoCoord: {'x': number, 'y': number}, ctx: CanvasRenderingContext2D) {
+
+        let a = this.isoToCanvasCoords({
+            'x': isoCoord.x,
+            'y': isoCoord.y
+        });
+        let b = this.isoToCanvasCoords({           
+            'x': isoCoord.x + 1,
+            'y': isoCoord.y
+        });
+        let c = this.isoToCanvasCoords({
+            'x': isoCoord.x + 1,
+            'y': isoCoord.y + 1
+        });
+        let d = this.isoToCanvasCoords({
+            'x': isoCoord.x,
+            'y': isoCoord.y + 1
+        });
+
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.lineTo(c.x, c.y);
+        ctx.lineTo(d.x, d.y);
+        ctx.closePath();
+        ctx.strokeStyle = '#ff0000';
+        ctx.stroke();        
+    }
+
     drawIsoTile(isoCoord:  {'x': number, 'y': number}, tile: isoTile.IsoTile, ctx: CanvasRenderingContext2D) {
 
         if (tile && tile.image && !tile.properties.isHidden) {
@@ -213,7 +285,7 @@ export class IsoCanvas {
         var d = this.canvasToIsoCoords({'x': 0, 'y': this._canvas.height});
 
         // adjust so that corners form a perfect rectangle
-        a.x = Math.floor(a.x) - 1;  // slightly larger that screen
+        a.x = Math.floor(a.x);
         a.y = Math.floor(a.y);
         b.x = Math.floor(b.x);
         b.y = a.y - b.x + a.x;     
@@ -222,14 +294,28 @@ export class IsoCanvas {
         d.x = ((c.x+c.y)+(a.x-a.y))/2;  // ?prove always divisible?
         d.y = ((c.x+c.y)-(a.x-a.y))/2;
 
-        // begin curser in upper left corner of rectangle
-        var u = {'x': a.x, 'y': a.y};
-        var height = 2*(d.y - a.y) + 1;     // breaks?
+        // begin cursor in upper left corner of rectangle
+        let u = {
+            'x': a.x,
+            'y': a.y
+        }
+        let rowStart = {
+            'x': a.x, 
+            'y': a.y            
+        }
+        let rowEnd = {
+            'x': b.x + this._relativeIsoRotationDirections[this._isoRotation][0].x, 
+            'y': b.y  + this._relativeIsoRotationDirections[this._isoRotation][0].y
+        };
+        let terminator = {
+            'x': d.x + this._relativeIsoRotationDirections[this._isoRotation][5].x,
+            'y': d.y + this._relativeIsoRotationDirections[this._isoRotation][5].y,
+        }
+        let rowCounter = 0;
         
-        // work downward from top row
-        for (var diagonal = 0; diagonal < height; diagonal++) {
+        while ((u.x != terminator.x) && (u.y != terminator.y)) {
 
-            while ((u.x <= b.x) && (u.y >= b.y)) {
+            while ((u.x != rowEnd.x) && (u.y != rowEnd.y)) {
 
                 if ((u.x > -1) && (u.x < this.map[0].length) && (u.y > -1) && (u.y < this.map.length)) {
                     
@@ -238,7 +324,10 @@ export class IsoCanvas {
                     for (var level = 0; level < this.map[u.y][u.x].length; level++) {
                         
                         // todo: detect if tile is visible or obscured to speed up drawing
-                        this.drawIsoTile({'x': u.x -stackingHeight, 'y': u.y - stackingHeight}, this.tiles[this.map[u.y][u.x][level]], ctx);
+                        this.drawIsoTile({
+                            'x': u.x + this._relativeIsoRotationDirections[this._isoRotation][2].x*stackingHeight,
+                            'y': u.y + this._relativeIsoRotationDirections[this._isoRotation][2].y*stackingHeight
+                            }, this.tiles[this.map[u.y][u.x][level]], ctx);
                         stackingHeight += this.tiles[this.map[u.y][u.x][level]].properties.stackingHeight;
                     }
                     // highlight mouseover tile
@@ -257,23 +346,28 @@ export class IsoCanvas {
                         ctx.fill();                      
                     }                    
                 }
-                // move cursor diagonal left
-                u.x++;
-                u.y--;
+                // move cursor left
+                u.x += this._relativeIsoRotationDirections[this._isoRotation][0].x;
+                u.y += this._relativeIsoRotationDirections[this._isoRotation][0].y;
             }
             // proceed downward in zigzag fashion
             // /  \
             // \  /
             // /  \
             // ..
-            if (diagonal % 2 == 1) {
-                b.y++;
-                a.x++;
+            if (rowCounter % 2 == 1) {
+                rowStart.x += this._relativeIsoRotationDirections[this._isoRotation][5].x;
+                rowStart.y += this._relativeIsoRotationDirections[this._isoRotation][5].y;                
+                rowEnd.x += this._relativeIsoRotationDirections[this._isoRotation][7].x;
+                rowEnd.y += this._relativeIsoRotationDirections[this._isoRotation][7].y;
             } else {
-                b.x++;
-                a.y++;
+                rowStart.x += this._relativeIsoRotationDirections[this._isoRotation][7].x;
+                rowStart.y += this._relativeIsoRotationDirections[this._isoRotation][7].y;                
+                rowEnd.x += this._relativeIsoRotationDirections[this._isoRotation][5].x;
+                rowEnd.y += this._relativeIsoRotationDirections[this._isoRotation][5].y;
             }
-            u = {'x': a.x, 'y': a.y};   // set cursor to next diagonal row
+            rowCounter++;
+            u = {'x': rowStart.x, 'y': rowStart.y};   // set cursor to next row
         }
     }
 
@@ -435,6 +529,7 @@ export class IsoCanvas {
         }
 
         this.drawIsoTilesWithinCanvasFrame(ctx);
+        this.highlightCell(this._mouseCell, ctx);
 
     }
 
@@ -550,7 +645,7 @@ export class IsoCanvas {
             this._mouseCell.y = Math.floor(this._mouseIso.y);
             this.paint();
         }
-        console.log(this._mouseIso);
+        console.log(this._mouseCell);
     }
     
     defaultMouseWheelListener(event) {
