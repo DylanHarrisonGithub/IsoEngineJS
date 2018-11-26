@@ -306,14 +306,14 @@ export class IsoCanvas {
             let cY = this.isoToCanvasCoords({
                 'x': isoCoord.x + 0.5
                     + (tile.properties.cellWidth - 1)*this._relativeIsoRotationDirections[this._isoRotation][3].x
-                    + (tile.properties.cellHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][1].x
-                    + (tile.properties.stackingHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][2].x
+                    + (tile.properties.cellBreadth - 1)*this._relativeIsoRotationDirections[this._isoRotation][1].x
+                    + (tile.properties.cellHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][2].x
                     + this._relativeIsoRotationDirections[this._isoRotation][2].x
                     + this._relativeIsoRotationDirections[this._isoRotation][3].x,
                 'y': isoCoord.y + 0.5
                     + (tile.properties.cellWidth - 1)*this._relativeIsoRotationDirections[this._isoRotation][3].y 
-                    + (tile.properties.cellHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][1].y
-                    + (tile.properties.stackingHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][2].y                    
+                    + (tile.properties.cellBreadth - 1)*this._relativeIsoRotationDirections[this._isoRotation][1].y
+                    + (tile.properties.cellHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][2].y                    
                     + this._relativeIsoRotationDirections[this._isoRotation][2].y
                     + this._relativeIsoRotationDirections[this._isoRotation][3].y
             });
@@ -322,8 +322,8 @@ export class IsoCanvas {
                 tile.image,
                 tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight,
                 cX.x, cY.y,
-                (0.5*tile.properties.cellWidth + 0.5*tile.properties.cellHeight)*this._canvasTileSize.x,
-                (0.25*tile.properties.cellWidth + 0.25*tile.properties.cellHeight + 0.5*tile.properties.stackingHeight)*this._canvasTileSize.x
+                (0.5*tile.properties.cellWidth + 0.5*tile.properties.cellBreadth)*this._canvasTileSize.x,
+                (0.25*tile.properties.cellWidth + 0.25*tile.properties.cellBreadth + 0.5*tile.properties.cellHeight)*this._canvasTileSize.x
             );
         }
     }
@@ -396,12 +396,10 @@ export class IsoCanvas {
                         
                         // todo: detect if tile is visible or obscured to speed up drawing
                         this.drawIsoTile({
-                            //'x': u.x + this._relativeIsoRotationDirections[this._isoRotation][2].x*stackingHeight,
-                            //'y': u.y + this._relativeIsoRotationDirections[this._isoRotation][2].y*stackingHeight
-                            'x': u.x,
-                            'y': u.y    
+                            'x': u.x + this._relativeIsoRotationDirections[this._isoRotation][2].x*stackingHeight,
+                            'y': u.y + this._relativeIsoRotationDirections[this._isoRotation][2].y*stackingHeight   
                         }, this.tiles[this.map[u.y][u.x][level]], ctx);
-                        stackingHeight += this.tiles[this.map[u.y][u.x][level]].properties.stackingHeight;
+                        stackingHeight += this.tiles[this.map[u.y][u.x][level]].properties.cellHeight;
                     }
                     // highlight mouseover tile
                     /* if ((u.x == this._mouseCell.x) && (u.y == this._mouseCell.y)) {

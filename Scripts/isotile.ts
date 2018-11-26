@@ -5,6 +5,7 @@ export class IsoTile {
     public image: HTMLImageElement;
     public properties = {
         'cellWidth': 1,
+        'cellBreadth': 1,
         'cellHeight': 1,
         'subImageX': 0,
         'subImageY': 0,
@@ -38,6 +39,14 @@ export class IsoTile {
                 }
             }
         }
+
+        // enforce cell height law
+        this.calculateCellHeight();
+    }
+
+    calculateCellHeight() {
+        let hwRatio = this.properties.subImageHeight / this.properties.subImageWidth;
+        this.properties.cellHeight = ((2*hwRatio-1)*this.properties.cellWidth + (2*hwRatio-1)*this.properties.cellBreadth) / 2;        
     }
 
     static loadTileset(filenames: string[], onload: (tileset: IsoTile[]) => void) {

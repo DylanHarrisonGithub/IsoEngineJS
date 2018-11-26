@@ -34,12 +34,12 @@
                     };
 
                     // why is this event firing twice?
-                    tileSet.loadFromServer('tiles/tileset2.json', () => {
+                    tileSet.loadFromServer('tiles/tileset.json', () => {
                         for (tile of tileSet._isoTiles) {
                             isoCanvas.tiles.push(tile);
                         }
                         //isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
-                        isoCanvas.generateRandomMap(128, 128, 1);
+                        isoCanvas.generateRandomMap(128, 128, 4);
                         isoCanvas.paint();
                         
                         console.log('loaded: ', isoCanvas.tiles.length);

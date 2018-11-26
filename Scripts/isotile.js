@@ -7,6 +7,7 @@ define(["require", "exports"], function (require, exports) {
         function IsoTile(img, params) {
             this.properties = {
                 'cellWidth': 1,
+                'cellBreadth': 1,
                 'cellHeight': 1,
                 'subImageX': 0,
                 'subImageY': 0,
@@ -36,7 +37,13 @@ define(["require", "exports"], function (require, exports) {
                     }
                 }
             }
+            // enforce cell height law
+            this.calculateCellHeight();
         }
+        IsoTile.prototype.calculateCellHeight = function () {
+            var hwRatio = this.properties.subImageHeight / this.properties.subImageWidth;
+            this.properties.cellHeight = ((2 * hwRatio - 1) * this.properties.cellWidth + (2 * hwRatio - 1) * this.properties.cellBreadth) / 2;
+        };
         IsoTile.loadTileset = function (filenames, onload) {
             var images = [];
             var numImages = filenames.length;
