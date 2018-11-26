@@ -27,14 +27,19 @@
                         isoCanvas.defaultMouseWheelListener(ev);
                         isoCanvas.paint();
                     });
+                    document.onkeypress = (event) => {
+                        if (event.key == 'r') {
+                            isoCanvas.setRotation(isoCanvas._isoRotation + 1);
+                        }
+                    };
 
                     // why is this event firing twice?
-                    tileSet.loadFromServer('tiles/tileset.json', () => {
+                    tileSet.loadFromServer('tiles/tileset2.json', () => {
                         for (tile of tileSet._isoTiles) {
                             isoCanvas.tiles.push(tile);
                         }
                         //isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
-                        isoCanvas.generateRandomMap(100, 100, 1);
+                        isoCanvas.generateRandomMap(128, 128, 1);
                         isoCanvas.paint();
                         
                         console.log('loaded: ', isoCanvas.tiles.length);

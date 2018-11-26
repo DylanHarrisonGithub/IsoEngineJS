@@ -80,10 +80,22 @@ export class IsoCanvas {
         this._halfResolution.x = this._canvas.width / 2;
         this._halfResolution.y = this._canvas.height / 2;
 
-        var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
-        var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
-        var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
-        var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
+        var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+            'x': this._relativeIsoRotationDirections[this._isoRotation][5].x, 
+            'y': this._relativeIsoRotationDirections[this._isoRotation][5].y
+        }));
+        var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+            'x': this._relativeIsoRotationDirections[this._isoRotation][7].x, 
+            'y': this._relativeIsoRotationDirections[this._isoRotation][7].y
+        }));
+        var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+            'x': 0, 
+            'y': 0
+        }));
+        var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+            'x': this._relativeIsoRotationDirections[this._isoRotation][6].x, 
+            'y': this._relativeIsoRotationDirections[this._isoRotation][6].y
+        }));
         this._canvasTileSize.x = size2.x - size1.x;
         this._canvasTileSize.y = size4.y - size3.y;
 
@@ -212,6 +224,33 @@ export class IsoCanvas {
         );
     }
 
+    setRotation(r: number) {
+        if (r >= 0) {
+            let isoLoc = this.cartesianToIsoCoords(this._location);
+            this._isoRotation = Math.floor(r) % 4;
+            var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+                'x': this._relativeIsoRotationDirections[this._isoRotation][5].x, 
+                'y': this._relativeIsoRotationDirections[this._isoRotation][5].y
+            }));
+            var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+                'x': this._relativeIsoRotationDirections[this._isoRotation][7].x, 
+                'y': this._relativeIsoRotationDirections[this._isoRotation][7].y
+            }));
+            var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+                'x': 0, 
+                'y': 0
+            }));
+            var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+                'x': this._relativeIsoRotationDirections[this._isoRotation][6].x, 
+                'y': this._relativeIsoRotationDirections[this._isoRotation][6].y
+            }));
+            this._canvasTileSize.x = size2.x - size1.x;
+            this._canvasTileSize.y = size4.y - size3.y;
+            this._location = this.isoToCartesianCoords(isoLoc);
+            this.paint();
+        }       
+    }
+
     // Drawing
     clearCanvas(ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = this.backgroundColor;
@@ -254,19 +293,35 @@ export class IsoCanvas {
             // todo: optimize with algebra
             // x coord of leftmost lowest tile
             let cX = this.isoToCanvasCoords({
-                'x': isoCoord.x - (tile.properties.cellWidth - 1) - 1.5,
-                'y': isoCoord.y - 0.5
+                'x': isoCoord.x + 0.5 
+                    + (tile.properties.cellWidth - 1)*this._relativeIsoRotationDirections[this._isoRotation][3].x
+                    + this._relativeIsoRotationDirections[this._isoRotation][2].x
+                    + this._relativeIsoRotationDirections[this._isoRotation][3].x,
+                'y': isoCoord.y + 0.5
+                    + (tile.properties.cellWidth - 1)*this._relativeIsoRotationDirections[this._isoRotation][3].y                    
+                    + this._relativeIsoRotationDirections[this._isoRotation][2].y
+                    + this._relativeIsoRotationDirections[this._isoRotation][3].y
             });
             // y coord of uppermost tile
             let cY = this.isoToCanvasCoords({
-                'x': isoCoord.x - (tile.properties.cellWidth + tile.properties.stackingHeight - 2) - 1.5,
-                'y': isoCoord.y - (tile.properties.cellHeight + tile.properties.stackingHeight - 2) - 0.5
+                'x': isoCoord.x + 0.5
+                    + (tile.properties.cellWidth - 1)*this._relativeIsoRotationDirections[this._isoRotation][3].x
+                    + (tile.properties.cellHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][1].x
+                    + (tile.properties.stackingHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][2].x
+                    + this._relativeIsoRotationDirections[this._isoRotation][2].x
+                    + this._relativeIsoRotationDirections[this._isoRotation][3].x,
+                'y': isoCoord.y + 0.5
+                    + (tile.properties.cellWidth - 1)*this._relativeIsoRotationDirections[this._isoRotation][3].y 
+                    + (tile.properties.cellHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][1].y
+                    + (tile.properties.stackingHeight - 1)*this._relativeIsoRotationDirections[this._isoRotation][2].y                    
+                    + this._relativeIsoRotationDirections[this._isoRotation][2].y
+                    + this._relativeIsoRotationDirections[this._isoRotation][3].y
             });
     
             ctx.drawImage(
                 tile.image,
                 tile.properties.subImageX, tile.properties.subImageY, tile.properties.subImageWidth, tile.properties.subImageHeight,
-                cX.x, cY.y, 
+                cX.x, cY.y,
                 (0.5*tile.properties.cellWidth + 0.5*tile.properties.cellHeight)*this._canvasTileSize.x,
                 (0.25*tile.properties.cellWidth + 0.25*tile.properties.cellHeight + 0.5*tile.properties.stackingHeight)*this._canvasTileSize.x
             );
@@ -293,6 +348,21 @@ export class IsoCanvas {
         c.x = c.y - b.y + b.x;
         d.x = ((c.x+c.y)+(a.x-a.y))/2;  // ?prove always divisible?
         d.y = ((c.x+c.y)-(a.x-a.y))/2;
+        
+        a.x += this._relativeIsoRotationDirections[this._isoRotation][3].x;
+        a.y += this._relativeIsoRotationDirections[this._isoRotation][3].y;
+        b.x += this._relativeIsoRotationDirections[this._isoRotation][1].x;
+        b.y += this._relativeIsoRotationDirections[this._isoRotation][1].y;
+        c.x += this._relativeIsoRotationDirections[this._isoRotation][7].x;
+        c.y += this._relativeIsoRotationDirections[this._isoRotation][7].y;
+        d.x += this._relativeIsoRotationDirections[this._isoRotation][5].x;
+        d.y += this._relativeIsoRotationDirections[this._isoRotation][5].y;
+
+/*         console.log(a, b, c, d);
+        this.highlightCell(a, ctx);
+        this.highlightCell(b, ctx);
+        this.highlightCell(c, ctx);
+        this.highlightCell(d, ctx); */
 
         // begin cursor in upper left corner of rectangle
         let u = {
@@ -316,22 +386,25 @@ export class IsoCanvas {
         while ((u.x != terminator.x) && (u.y != terminator.y)) {
 
             while ((u.x != rowEnd.x) && (u.y != rowEnd.y)) {
+                
 
                 if ((u.x > -1) && (u.x < this.map[0].length) && (u.y > -1) && (u.y < this.map.length)) {
-                    
+                    //this.highlightCell(u, ctx);
                     // draw tiles from ground up
                     var stackingHeight = 0;
                     for (var level = 0; level < this.map[u.y][u.x].length; level++) {
                         
                         // todo: detect if tile is visible or obscured to speed up drawing
                         this.drawIsoTile({
-                            'x': u.x + this._relativeIsoRotationDirections[this._isoRotation][2].x*stackingHeight,
-                            'y': u.y + this._relativeIsoRotationDirections[this._isoRotation][2].y*stackingHeight
-                            }, this.tiles[this.map[u.y][u.x][level]], ctx);
+                            //'x': u.x + this._relativeIsoRotationDirections[this._isoRotation][2].x*stackingHeight,
+                            //'y': u.y + this._relativeIsoRotationDirections[this._isoRotation][2].y*stackingHeight
+                            'x': u.x,
+                            'y': u.y    
+                        }, this.tiles[this.map[u.y][u.x][level]], ctx);
                         stackingHeight += this.tiles[this.map[u.y][u.x][level]].properties.stackingHeight;
                     }
                     // highlight mouseover tile
-                    if ((u.x == this._mouseCell.x) && (u.y == this._mouseCell.y)) {
+                    /* if ((u.x == this._mouseCell.x) && (u.y == this._mouseCell.y)) {
                         let hu = this.isoToCanvasCoords({'x': u.x -stackingHeight, 'y': u.y - stackingHeight});
                         let hl = this.isoToCanvasCoords({'x': u.x -stackingHeight +1, 'y': u.y - stackingHeight});
                         let hd = this.isoToCanvasCoords({'x': u.x -stackingHeight +1, 'y': u.y - stackingHeight +1});
@@ -344,7 +417,7 @@ export class IsoCanvas {
                         ctx.closePath();
                         ctx.fillStyle = '#8ed6ff';
                         ctx.fill();                      
-                    }                    
+                    } */                    
                 }
                 // move cursor left
                 u.x += this._relativeIsoRotationDirections[this._isoRotation][0].x;
@@ -645,7 +718,6 @@ export class IsoCanvas {
             this._mouseCell.y = Math.floor(this._mouseIso.y);
             this.paint();
         }
-        console.log(this._mouseCell);
     }
     
     defaultMouseWheelListener(event) {
@@ -658,10 +730,22 @@ export class IsoCanvas {
             this._zoomInverse = 1.0/this._zoom;			
         }
         
-        var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 1}));
-        var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 0}));
-        var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 0, 'y': 0}));
-        var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({'x': 1, 'y': 1}));
+        var size1 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+            'x': this._relativeIsoRotationDirections[this._isoRotation][5].x, 
+            'y': this._relativeIsoRotationDirections[this._isoRotation][5].y
+        }));
+        var size2 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+            'x': this._relativeIsoRotationDirections[this._isoRotation][7].x, 
+            'y': this._relativeIsoRotationDirections[this._isoRotation][7].y
+        }));
+        var size3 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+            'x': 0, 
+            'y': 0
+        }));
+        var size4 = this.cartesianToCanvasCoords(this.isoToCartesianCoords({
+            'x': this._relativeIsoRotationDirections[this._isoRotation][6].x, 
+            'y': this._relativeIsoRotationDirections[this._isoRotation][6].y
+        }));
         this._canvasTileSize.x = size2.x - size1.x;
         this._canvasTileSize.y = size4.y - size3.y;
         
