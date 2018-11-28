@@ -16,7 +16,7 @@ export class IsoCanvas {
     private _mouseCartesian = {'x': 0, 'y': 0};
     private _mouseIso = {'x': 0, 'y': 0};
     private _mouseCell = {'x': 0, 'y': 0};
-    private _isoRotation = 1;
+    private _isoRotation = 0;
     
     public axesColor = '#000000';
     public gridColor = '#A0A0C0';
@@ -100,8 +100,8 @@ export class IsoCanvas {
         this._canvasTileSize.y = size4.y - size3.y;
 
         // dummy invisible tiles for filler spaces
-        this.tiles.push(new isoTile.IsoTile(null, {isHidden: true, canStack: false}));
-        this.tiles.push(new isoTile.IsoTile(null, {isHidden: true}));
+        //this.tiles.push(new isoTile.IsoTile(null, {isHidden: true, canStack: false}));
+        //this.tiles.push(new isoTile.IsoTile(null, {isHidden: true}));
 
         this._div.addEventListener('mousemove', (ev: UIEvent) => {this.defaultMouseMoveListener(ev)});
 
@@ -395,27 +395,14 @@ export class IsoCanvas {
                     for (var level = 0; level < this.map[u.y][u.x].length; level++) {
                         
                         // todo: detect if tile is visible or obscured to speed up drawing
+                        let tileQ = Math.floor(this.map[u.y][u.x][level] / 4);
+                        let tileR = (this._isoRotation + this.map[u.y][u.x][level]) % 4;
                         this.drawIsoTile({
                             'x': u.x + this._relativeIsoRotationDirections[this._isoRotation][2].x*stackingHeight,
                             'y': u.y + this._relativeIsoRotationDirections[this._isoRotation][2].y*stackingHeight   
-                        }, this.tiles[this.map[u.y][u.x][level]], ctx);
+                        }, this.tiles[4*tileQ + tileR], ctx);
                         stackingHeight += this.tiles[this.map[u.y][u.x][level]].properties.cellHeight;
-                    }
-                    // highlight mouseover tile
-                    /* if ((u.x == this._mouseCell.x) && (u.y == this._mouseCell.y)) {
-                        let hu = this.isoToCanvasCoords({'x': u.x -stackingHeight, 'y': u.y - stackingHeight});
-                        let hl = this.isoToCanvasCoords({'x': u.x -stackingHeight +1, 'y': u.y - stackingHeight});
-                        let hd = this.isoToCanvasCoords({'x': u.x -stackingHeight +1, 'y': u.y - stackingHeight +1});
-                        let hr = this.isoToCanvasCoords({'x': u.x -stackingHeight, 'y': u.y - stackingHeight +1});
-                        ctx.beginPath();
-                        ctx.moveTo(hu.x, hu.y);
-                        ctx.lineTo(hl.x, hl.y);
-                        ctx.lineTo(hd.x, hd.y);
-                        ctx.lineTo(hr.x, hr.y);
-                        ctx.closePath();
-                        ctx.fillStyle = '#8ed6ff';
-                        ctx.fill();                      
-                    } */                    
+                    }                   
                 }
                 // move cursor left
                 u.x += this._relativeIsoRotationDirections[this._isoRotation][0].x;

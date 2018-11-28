@@ -34,15 +34,30 @@
                     };
 
                     // why is this event firing twice?
-                    tileSet.loadFromServer('tiles/tileset.json', () => {
-                        for (tile of tileSet._isoTiles) {
-                            isoCanvas.tiles.push(tile);
+                    tileSet.loadFromServer('tiles/dirt.json', () => {
+                        isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
+                        if (isoCanvas.tiles.length == 4) {
+                            tileSet = new isoTileSetNameSpace.IsoTileSet();
+                            tileSet.loadFromServer('tiles/grass.json', () => {
+                                isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
+                                if (isoCanvas.tiles.length == 8) {
+                                    isoCanvas.generateRandomMap(128, 128, 1);
+                                    tileSet = new isoTileSetNameSpace.IsoTileSet();
+                                    tileSet.loadFromServer('tiles/tower.json', () => {
+                                        isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
+                                        if (isoCanvas.tiles.length == 12) {
+                                            for (let n = 0; n < 10; n++) {
+                                                let x = Math.floor(Math.random()*isoCanvas.map[0].length);
+                                                let y = Math.floor(Math.random()*isoCanvas.map.length);
+                                                isoCanvas.map[y][x].push(8 + Math.floor(Math.random()*4));
+                                            }
+                                            console.log('loaded: ', isoCanvas.tiles.length);                                           
+                                            isoCanvas.paint();
+                                        }
+                                    });
+                                }
+                            });
                         }
-                        //isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
-                        isoCanvas.generateRandomMap(128, 128, 4);
-                        isoCanvas.paint();
-                        
-                        console.log('loaded: ', isoCanvas.tiles.length);
                     });
 
                 });
