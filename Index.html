@@ -34,16 +34,16 @@
                     };
 
                     // why is this event firing twice?
-                    tileSet.loadFromServer('tiles/dirt.json', () => {
+                    tileSet.loadFromServer('assets/tiles/dirt.json', () => {
                         isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
                         if (isoCanvas.tiles.length == 4) {
                             tileSet = new isoTileSetNameSpace.IsoTileSet();
-                            tileSet.loadFromServer('tiles/grass.json', () => {
+                            tileSet.loadFromServer('assets/tiles/grass.json', () => {
                                 isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
                                 if (isoCanvas.tiles.length == 8) {
                                     isoCanvas.generateRandomMap(128, 128, 1);
                                     tileSet = new isoTileSetNameSpace.IsoTileSet();
-                                    tileSet.loadFromServer('tiles/tower.json', () => {
+                                    tileSet.loadFromServer('assets/tiles/tower.json', () => {
                                         isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
                                         if (isoCanvas.tiles.length == 12) {
                                             for (let n = 0; n < 10; n++) {
