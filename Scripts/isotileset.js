@@ -69,7 +69,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                 window.URL.revokeObjectURL(url);
             }, 0);
         };
-        IsoTileSet.prototype.dumbLoad = function (onload) {
+        IsoTileSet.prototype.dumbLoad = function (onloaded) {
             var _this = this;
             var inputElement = document.createElement('input');
             inputElement.setAttribute('type', 'file');
@@ -94,8 +94,9 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                                     for (var _i = 0, _a = file.tiles; _i < _a.length; _i++) {
                                         var tile = _a[_i];
                                         _this._isoTiles.push(new isoTile.IsoTile(_this._images[tile.index], tile.properties));
+                                        //console.log(tile);
                                     }
-                                    onload();
+                                    onloaded();
                                 }
                             });
                             newImage.onerror = function () {
@@ -104,7 +105,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                             };
                             newImage.src = fileImg;
                         }
-                        onload();
+                        //onloaded();
                     });
                     reader.readAsText(inputElement.files[0]);
                 }
@@ -150,7 +151,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
                     var fileImg = _a[_i];
                     _loop_1(fileImg);
                 }
-                onload();
+                //onload();
             });
         };
         return IsoTileSet;

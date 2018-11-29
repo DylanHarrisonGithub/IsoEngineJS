@@ -24,6 +24,7 @@ export class IsoCanvas {
     public map = [];
     private _heightMap = [];
     public tiles: isoTile.IsoTile[] = [];
+    private tileSetNames = [];
     public showAxes = true;
     public showGrid = true;
     
@@ -330,6 +331,7 @@ export class IsoCanvas {
 
     drawIsoTilesWithinCanvasFrame(ctx: CanvasRenderingContext2D) {
 
+        if (!this.map[0]) {return};
         // get isometric coordinates of canvas boundary corners
         // a----b
         // |    |

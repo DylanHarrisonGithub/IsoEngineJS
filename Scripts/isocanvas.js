@@ -22,6 +22,7 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             this.map = [];
             this._heightMap = [];
             this.tiles = [];
+            this.tileSetNames = [];
             this.showAxes = true;
             this.showGrid = true;
             this._relativeIsoRotationDirections = [
@@ -292,6 +293,10 @@ define(["require", "exports", "./isotile"], function (require, exports, isoTile)
             }
         };
         IsoCanvas.prototype.drawIsoTilesWithinCanvasFrame = function (ctx) {
+            if (!this.map[0]) {
+                return;
+            }
+            ;
             // get isometric coordinates of canvas boundary corners
             // a----b
             // |    |

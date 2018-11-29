@@ -74,7 +74,7 @@ export class IsoTileSet {
         }, 0);        
     }
 
-    dumbLoad(onload: Function) {
+    dumbLoad(onloaded: Function) {
         let inputElement = document.createElement('input');
         inputElement.setAttribute('type', 'file');
         inputElement.setAttribute('style', 'display:none');
@@ -84,7 +84,7 @@ export class IsoTileSet {
                 reader.onload = ((event) => {
                     let file = JSON.parse((<any>event.target).result);
                     this.properties = file.properties;
-
+                    
                     this._images = [];                    
                     let numImages = file.images.length;
                     let loadedCounter = 0;
@@ -100,8 +100,9 @@ export class IsoTileSet {
                                         this._images[tile.index],
                                         tile.properties
                                     ));
+                                    //console.log(tile);
                                 }
-                                onload();
+                                onloaded();
                             }
                         });
                         newImage.onerror = function() {
@@ -110,7 +111,7 @@ export class IsoTileSet {
                         }
                         newImage.src = fileImg;
                     }
-                    onload();
+                    //onloaded();
                 });
                 reader.readAsText(inputElement.files[0]);
             }
@@ -154,7 +155,7 @@ export class IsoTileSet {
                 }
                 newImage.src = fileImg;
             }
-            onload();
+            //onload();
         });
     }
 
