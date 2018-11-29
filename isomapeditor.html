@@ -6,7 +6,11 @@
         <script src="scripts/requirejs.js"></script>
         <!--<script type="text/javascript" src="scripts/isotileseteditor.js"></script>-->
         <script>
+
             var isoCanvas;
+            var tileCanvasTileSize=70
+            var selectedTile=-1;
+
             function init() {
                 requirejs([
                     'scripts/isotile', 
@@ -31,6 +35,13 @@
                             isoCanvas.setRotation(isoCanvas._isoRotation + 1);
                         }
                     };
+                    document.getElementById('tilesCanvas').addEventListener('click', function(ev) {
+                        let rec = ev.target.getBoundingClientRect();
+                        let x = Math.floor((ev.clientX-rec.left) / tileCanvasTileSize);
+                        let y = Math.floor((ev.clientY-rec.top) / tileCanvasTileSize);
+                        selectedTile = 4*y+x;
+                        drawTilesCanvas();
+                    });
                     isoCanvas.paint();
                 });
             }
@@ -58,23 +69,28 @@
                     'scripts/isotileset'],
                 function(isoTileNameSpace, isoCanvasNameSpace, isoTileSetNameSpace) {
                     let tilesCanvas = document.getElementById('tilesCanvas');
-                    let tileSize = 69;
-                    tilesCanvas.width = 4*tileSize+5;
-                    tilesCanvas.height = tileSize*Math.ceil(isoCanvas.tiles.length / 4);
+                    tilesCanvas.width = 4*tileCanvasTileSize;
+                    tilesCanvas.height = tileCanvasTileSize*Math.ceil(isoCanvas.tiles.length / 4)+1;
                     //clear
                     let ctx = tilesCanvas.getContext('2d');
                     ctx.fillStyle = '#dfe5e8';
                     ctx.fillRect(0,0,tilesCanvas.width,tilesCanvas.height);
                     let x, y;
                     for (let n = 0; n < isoCanvas.tiles.length; n++) {
-                        x = tileSize*(n % 4);
-                        y = tileSize*Math.floor(n / 4);
+                        x = tileCanvasTileSize*(n % 4);
+                        y = tileCanvasTileSize*Math.floor(n / 4);
                         ctx.drawImage(
                             isoCanvas.tiles[n].image,
                             isoCanvas.tiles[n].properties.subImageX, isoCanvas.tiles[n].properties.subImageY, isoCanvas.tiles[n].properties.subImageWidth, isoCanvas.tiles[n].properties.subImageHeight,
-                            x+(n % 4)+1, y,
-                            tileSize, tileSize
+                            x, y,
+                            tileCanvasTileSize, tileCanvasTileSize
                         );
+                        if (n == selectedTile) {
+                            ctx.strokeStyle='red';
+                            ctx.beginPath();
+                            ctx.rect(x, y, tileCanvasTileSize, tileCanvasTileSize);
+                            ctx.stroke();
+                        }
                     }
                 });
             }
@@ -89,7 +105,7 @@
                         <span style="margin-right:5px; float:right;"><button onclick="loadTileset()" style="margin-top:1px;">Import</button></span>
                     </div>
                     <div id="tilesDiv" class="w3-theme-l4" style="width:100%; top:24px; bottom: 0px; position:absolute; overflow-y:scroll; overflow-x:hidden;">
-                        <canvas id="tilesCanvas"></canvas>
+                        <canvas id="tilesCanvas" width='0px' height='0px'></canvas>
                     </div>
                 </div>
                 <div class="w3-theme-l3" style="height:33%; width: 100%; position:relative;">
