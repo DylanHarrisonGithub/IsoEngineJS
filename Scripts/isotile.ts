@@ -49,6 +49,7 @@ export class IsoTile {
         this.properties.cellHeight = ((2*hwRatio-1)*this.properties.cellWidth + (2*hwRatio-1)*this.properties.cellBreadth) / 2;        
     }
 
+    //deprecated
     static loadTileset(filenames: string[], onload: (tileset: IsoTile[]) => void) {
 
         var images: HTMLImageElement[] = [];

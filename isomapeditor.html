@@ -10,6 +10,11 @@
             var isoCanvas;
             var tileCanvasTileSize=70
             var selectedTile=-1;
+            let assets = [
+                'hand', 'brush', 'line', 'box', 'bucket'
+            ];
+            var toolIcons = [];
+            var selectedTool = 1;
 
             function init() {
                 requirejs([
@@ -18,6 +23,16 @@
                     'scripts/isotileset'],
                 function(isoTileNameSpace, isoCanvasNameSpace, isoTileSetNameSpace) {    
                     
+                    loadAssets(() => {
+                        drawToolsCanvas();
+                        document.getElementById('toolsCanvas').addEventListener('click', function(ev) {
+                            let rec = ev.target.getBoundingClientRect();
+                            let x = Math.floor((ev.clientX-rec.left) / tileCanvasTileSize);
+                            let y = Math.floor((ev.clientY-rec.top) / tileCanvasTileSize);
+                            selectedTool = 4*y+x;
+                            drawToolsCanvas();
+                        });
+                    });
                     isoCanvas = new isoCanvasNameSpace.IsoCanvas(document.getElementById('canvasDiv'));
                     window.addEventListener('resize', function(ev) {
                         isoCanvas.paint();
@@ -94,6 +109,47 @@
                     }
                 });
             }
+        function loadAssets(onload) {
+                let numLoaded = 0;
+                for (asset of assets) {
+                    let newImage = new Image();
+                    newImage.onload = () => {
+                        toolIcons.push(newImage);
+                        numLoaded++;
+                        if (numLoaded == assets.length) {
+                            onload();
+                        }
+                    }
+                    newImage.src = 'assets/isomapeditor/toolicons/' + asset + '.png';
+                }
+            }
+
+            function drawToolsCanvas() {
+                let toolsCanvas = document.getElementById('toolsCanvas');
+                toolsCanvas.width = 4*tileCanvasTileSize;
+                toolsCanvas.height = tileCanvasTileSize*Math.ceil(toolIcons.length / 4)+1;
+
+                //clear
+                let ctx = toolsCanvas.getContext('2d');
+                ctx.fillStyle = '#dfe5e8';
+                ctx.fillRect(0,0,toolsCanvas.width,toolsCanvas.height);
+                let x, y;
+                for (let n = 0; n < toolIcons.length; n++) {
+                    x = tileCanvasTileSize*(n % 4);
+                    y = tileCanvasTileSize*Math.floor(n / 4);
+                    ctx.drawImage(
+                        toolIcons[n],
+                        x, y,
+                        tileCanvasTileSize, tileCanvasTileSize
+                    );
+                    if (n == selectedTool) {
+                        ctx.strokeStyle='red';
+                        ctx.beginPath();
+                        ctx.rect(x, y, tileCanvasTileSize, tileCanvasTileSize);
+                        ctx.stroke();
+                    }
+                }
+            }
         </script>
     </head>
     <body  style="width:100%; height:100%; position: fixed" onload='init();'>
@@ -112,7 +168,9 @@
                     <div class="w3-theme-d5" style="width:100%;height:24px;">
                         <span style="margin-left:5px; margin-top:4px; display:inline-block;">Tools</span>                        
                     </div>
-                    <div id="toolsDiv" class="w3-theme-l4" style="width:100%; top:24px; bottom: 0px; position:absolute; overflow-y:scroll; overflow-x:hidden;"></div>
+                    <div id="toolsDiv" class="w3-theme-l4" style="width:100%; top:24px; bottom: 0px; position:absolute; overflow-y:scroll; overflow-x:hidden;">
+                        <canvas id="toolsCanvas" width='0px' height='0px'></canvas>
+                    </div>
                 </div>
                 <div class="w3-theme-l3" style="height:34%; width: 100%; position:relative;">
                     <div class="w3-theme-d5" style="width:100%;height:24px;">

@@ -33,7 +33,6 @@
                         }
                     };
 
-                    // why is this event firing twice?
                     tileSet.loadFromServer('assets/tiles/dirt.json', () => {
                         isoCanvas.tiles = isoCanvas.tiles.concat(tileSet._isoTiles);
                         if (isoCanvas.tiles.length == 4) {
